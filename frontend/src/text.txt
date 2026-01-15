@@ -1,0 +1,53 @@
+1. non cod account -> details must be added {Soon be done}
+2. return managemnt {done}
+3. if vendor cannot meet the target then charges will be dynamic {soon be discussed}
+4. d/ff routes for each vendor {done}
+5. timer for rider to meet target in assigned time. {done}
+6. if target time is not meet then notify the admin. {Soon be done}
+
+
+
+Q? 
+how the order amount be decide and where , how we create a formula to decide the amount 
+like does amount automatically generate using the inputs while the user create the order,
+how far the delivery is , weight , assigning discounts etc
+
+as of now it is decided that order created and how to assign the rider and if canceled 
+then handle, but now how to assign rider to drop the package to the user. should we create
+different route for delivery.
+
+as you said that for vendors discount will be granted to the vendor but where the discount
+be assigned like does the admin open up the route of user and then grant the discount or 
+is it also dynamic like if user done 100+ order then autiomatically assign certain % discount
+while creating the order. or you will grant discount coupon code like through email and through 
+that coupon code assigned by the admin vendor will enter it while creating the order and then 
+he gets discount and if he dont meet the target then admin can have power to make the coupon
+code useless.
+
+Am I right that for creating the order vendor will have options 
+1. cod (cash on delivery)
+    b. manual one by one order
+    a. bulk order 
+2. non cod
+    b. manual one by one order
+    a. bulk order 
+
+for bulk order we can use xlsx library to read the excel sheet and we will do error handling 
+so that all of the required fields are present there and then we allow vendor to confirm order
+by seeing it, now the question is that how we will confirm the order, just like in manual to 
+confirm each order or to see all to recheck and confirm all at once and then qr code and
+order detail will be shown in one pdf.
+
+
+
+
+//for location 
+// Simple implementation
+const showUserLocation = () => {
+        navigator.geolocation.getCurrentPosition((position) => {
+            const { latitude, longitude } = position.coords;
+            const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+            window.open(mapsUrl, '_blank');
+        });
+}
+<button onClick={showUserLocation}>kn</button>
