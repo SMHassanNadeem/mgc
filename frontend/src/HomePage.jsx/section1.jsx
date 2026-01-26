@@ -4,7 +4,7 @@ import Services from "./services";
 import Logistics from "./logistics";
 import AccomplishementCounter from "./AccomplishementCounters";
 import WorkingWith from "./workingWith";
-import { useEffect } from "react";
+import { useEffect,useState } from "react";
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -12,18 +12,35 @@ import 'react-toastify/dist/ReactToastify.css';
 export default function Section1() {
     const navigate = useNavigate()
 
+    const [notification, setNotification] = useState({
+        show: false,
+        message: '',
+        type: 'error'
+    });
+
     const location = useLocation()
     useEffect(() => {
         if (location.state?.from === '/order-form') {
-            toast.error(location.state.message, {
-                position: "top-right",
-                autoClose: 3000,
-                style: {
-                    background: '#d10115',
-                    color: 'white',
-                },
-            })
+            // toast.error(location.state.message, {
+            //     position: "top-right",
+            //     // autoClose: 3000,
+            //     style: {
+            //         background: '#d10115',
+            //         color: 'white',
+            //     },
+            // })
+            setNotification({
+                show: true,
+                message: location.state.message,
+                type: 'error'
+            });
+            const timer = setTimeout(() => {
+                setNotification(prev => ({ ...prev, show: false }));
+            }, 3000);
+
             window.history.replaceState({}, '')
+
+            return () => clearTimeout(timer);
         }
     }, [location.state])
 
@@ -32,6 +49,18 @@ export default function Section1() {
             <ToastContainer
                 pauseOnHover
             />
+            {notification.show && (
+                <div
+                    className="fixed top-5 right-5 z-[9999] px-4 py-3 rounded-lg shadow-lg text-white transition-all duration-300"
+                    style={{
+                        background: '#d10115',
+                        minWidth: '250px'
+                    }}
+                >
+                    {notification.message}
+                </div>
+            )}
+
 
             <CarouselFunction />
 
@@ -41,7 +70,7 @@ export default function Section1() {
                 <h1><b>Get Instant Access</b> </h1>
                 <h1 className="text-white text-md">TO GROWTH CAPITAL</h1>
                 <button
-                    onClick={() => navigate('/order-form')}
+                    onClick={() => navigate('/form-loader')}
                     style={{ fontFamily: 'poppins' }}
                     className="w-60 h-20! rounded-xl! m-0 text-xl! text-nowrap transition-all duration-300 ease-in-out text-gray-300 bg-[#d10115] hover:bg-[#ff3f39]"
                 >

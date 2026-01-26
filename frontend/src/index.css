@@ -162,3 +162,35 @@ body{
   mask-image:linear-gradient(to right, transparent, #000 10% 90%, transparent);
   /* 10% 90% to show more content */
 }
+
+
+
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #divToPrintOnSinglePage,
+  #divToPrintOnSinglePage * {
+    visibility: visible;
+  }
+
+  #divToPrintOnSinglePage {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    page-break-inside: avoid;
+  }
+
+  table, tr, td {
+    page-break-inside: avoid;
+  }
+
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+}
+

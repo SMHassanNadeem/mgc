@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-export default function SignupVendor() {
+export default function EditVendor({ vendorId }) {
 
     const queryClient = useQueryClient()
 
@@ -30,21 +30,16 @@ export default function SignupVendor() {
         BranchName: "",
         SwiftCode: "",
         password: "",
-        confPass: "",
         storeLink: ""
     });
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => {
-            const updated = { ...prev, [name]: value };
-            if (name === "password" || name === "confPass") {
-                validatePasswords(updated.password, updated.confPass);
-            }
-            return updated;
-        });
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
     };
 
-    const confPassRef = useRef(null);
     const notificationTimerRef = useRef(null);
     useEffect(() => {
         return () => {
@@ -61,12 +56,8 @@ export default function SignupVendor() {
 
     async function addUserLogic(formData) {
         try {
-            if (!formRef.current.checkValidity()) {
-                formRef.current.reportValidity();
-                return;
-            }
-            const formRes = await fetch('http://localhost:3000/users/signup-vendor', {
-                method: 'POST',
+            const formRes = await fetch(`http://localhost:3000/users/${vendorId}`, {
+                method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -91,8 +82,7 @@ export default function SignupVendor() {
             })
             const data = await formRes.json();
             if (!formRes.ok) {
-                const error = await formRes.json();
-                throw new Error(error.message || 'Signup failed');
+                throw new Error(data.message || 'Signup failed');
             }
 
             // toast.success(data?.message , {
@@ -105,7 +95,7 @@ export default function SignupVendor() {
             }
             setNotification({
                 show: true,
-                message: data?.message,
+                message: "Edited Successfully",
                 type: 'success'
             });
             notificationTimerRef.current = setTimeout(() => {
@@ -130,7 +120,6 @@ export default function SignupVendor() {
                 BranchName: "",
                 SwiftCode: "",
                 password: "",
-                confPass: "",
                 storeLink: ""
 
             });
@@ -155,7 +144,7 @@ export default function SignupVendor() {
     const addUserMutation = useMutation({
         mutationFn: addUserLogic,
         onSuccess: (data) => {
-            queryClient.invalidateQueries({ queryKey: ['vendor-order'] });
+            queryClient.invalidateQueries({ queryKey: ['vendorPrData'] });
             setOpenMenuAddUser(false);
         },
         onError: (error) => {
@@ -174,31 +163,17 @@ export default function SignupVendor() {
         }
     })
 
-    function addUser(e) {
-        e.preventDefault();
+    function addUser() {
+        // e.preventDefault();
         addUserMutation.mutate(formData)
     }
 
-    function validatePasswords(pass, conf) {
-        if (!confPassRef.current) return;
-
-        if (pass !== conf) {
-            confPassRef.current.setCustomValidity("Passwords do not match");
-        } else {
-            confPassRef.current.setCustomValidity("");
-        }
-    }
 
 
     const [page, setPage] = useState(0)
 
     function nextPage() {
-        if (!formRef.current) return;
-        if (formRef.current.checkValidity()) {
-            setPage(prev => Math.min(prev + 1, 2));
-        } else {
-            formRef.current.reportValidity();
-        }
+        setPage(prev => Math.min(prev + 1, 2));
     }
 
     function prevPage() {
@@ -250,30 +225,30 @@ export default function SignupVendor() {
                             Vendor Info
                             <b onClick={() => setOpenMenuAddUser(false)} className='cursor-pointer absolute right-0 mr-10'>X</b>
                         </h4>
-                        <form ref={formRef} onSubmit={addUser} className='w-full flex flex-col'>
+                        <form className='w-full flex flex-col'>
                             {page === 0 && (
                                 <fieldset disabled={page !== 0}>
                                     <div className="overflow-hidden flex flex-col sm:flex-row! gap-[5%]">
                                         <div className="flex flex-col sm:flex-row! w-full gap-3">
                                             <div className="w-full sm:w-[47.5%] flex flex-col gap-1">
                                                 <label className='font-bold text-gray-500 text-[15px]'>Vendor Name</label>
-                                                <input type="text" placeholder='vendor name' required name="CompanyName" value={formData.CompanyName} onChange={handleChange} className='border w-full rounded py-2 pl-3 text-[17px]! shadow-sm shadow-black/20 text-gray-900 h-13! focus:outline-blue-500! mb-2!' />
+                                                <input type="text" placeholder='vendor name' name="CompanyName" value={formData.CompanyName} onChange={handleChange} className='border w-full rounded py-2 pl-3 text-[17px]! shadow-sm shadow-black/20 text-gray-900 h-13! focus:outline-blue-500! mb-2!' />
                                                 <label className='font-bold text-gray-500 text-[15px]'>Phone No</label>
-                                                <input required name="PhoneNo" value={formData.PhoneNo} onChange={handleChange} type="number" className=' shadow-sm shadow-black/20 text-gray-900 h-13! focus:outline-blue-500! mb-2! border w-full rounded py-2 pl-3 text-[17px]!' placeholder='phone no' />
+                                                <input name="PhoneNo" value={formData.PhoneNo} onChange={handleChange} type="number" className=' shadow-sm shadow-black/20 text-gray-900 h-13! focus:outline-blue-500! mb-2! border w-full rounded py-2 pl-3 text-[17px]!' placeholder='phone no' />
                                                 <label className='font-bold text-gray-500 text-[15px]'>Pickup Address:</label>
-                                                <input required name="PickupAddress" value={formData.PickupAddress} onChange={handleChange} type="text" className=' shadow-sm shadow-black/20 text-gray-900 h-13! focus:outline-blue-500! mb-2! border w-full rounded py-2 pl-3 text-[17px]!' placeholder='Pickup Address' />
+                                                <input name="PickupAddress" value={formData.PickupAddress} onChange={handleChange} type="text" className=' shadow-sm shadow-black/20 text-gray-900 h-13! focus:outline-blue-500! mb-2! border w-full rounded py-2 pl-3 text-[17px]!' placeholder='Pickup Address' />
                                                 <label className='font-bold text-gray-500 text-[15px]'>CNIC Number:</label>
-                                                <input required name="Cnic" value={formData.Cnic} onChange={handleChange} type="number" className=' shadow-sm shadow-black/20 text-gray-900 h-13! focus:outline-blue-500! mb-2! border w-full rounded py-2 pl-3 text-[17px]!' placeholder='cnic no' />
+                                                <input name="Cnic" value={formData.Cnic} onChange={handleChange} type="number" className=' shadow-sm shadow-black/20 text-gray-900 h-13! focus:outline-blue-500! mb-2! border w-full rounded py-2 pl-3 text-[17px]!' placeholder='cnic no' />
                                             </div>
                                             <div className="w-full sm:w-[47.5%] flex flex-col gap-1">
                                                 <label className='font-bold text-gray-500 text-[15px]'>Person of Contact:</label>
-                                                <input required name="personOfContact" value={formData.personOfContact} onChange={handleChange} type="text" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='name' />
+                                                <input name="personOfContact" value={formData.personOfContact} onChange={handleChange} type="text" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='name' />
                                                 <label className='font-bold text-gray-500 text-[15px]'>Email:</label>
-                                                <input required name="Email" value={formData.Email} onChange={handleChange} type="text" className=' text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='email address' />
+                                                <input name="Email" value={formData.Email} onChange={handleChange} type="text" className=' text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='email address' />
                                                 <label className='font-bold text-gray-500 text-[15px]'>Store Link (optional)</label>
                                                 <input name="storeLink" value={formData.storeLink} onChange={handleChange} type="text" className=' text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='Store Link' />
                                                 {/* <label className='font-bold text-gray-500 text-[15px]'>Picture of CNIC:</label>
-                                                <input required name="cnicCopyImage" value={formData.cnicCopyImage} onChange={handleChange} type="file" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='Pickup Address:' /> */}
+                                                <input  name="cnicCopyImage" value={formData.cnicCopyImage} onChange={handleChange} type="file" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='Pickup Address:' /> */}
                                             </div>
                                         </div>
                                     </div>
@@ -285,21 +260,21 @@ export default function SignupVendor() {
                                         <div className="flex flex-col sm:flex-row! w-full gap-3">
                                             <div className="w-full sm:w-[47.5%] flex flex-col gap-1">
                                                 <label className='font-bold text-gray-500 text-[15px]'>Bank Name</label>
-                                                <input type="text" placeholder='enter bank name' required name="BankName" value={formData.BankName} onChange={handleChange} className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' />
+                                                <input type="text" placeholder='enter bank name' name="BankName" value={formData.BankName} onChange={handleChange} className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' />
                                                 <label className='font-bold text-gray-500 text-[15px]'>Account No</label>
-                                                <input required name="AccNo" value={formData.AccNo} onChange={handleChange} type="number" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='account no' />
+                                                <input name="AccNo" value={formData.AccNo} onChange={handleChange} type="number" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='account no' />
                                                 <label className='font-bold text-gray-500 text-[15px]'>Branch Code:</label>
-                                                <input required name="BranchCode" value={formData.BranchCode} onChange={handleChange} type="text" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='enter branch code' />
+                                                <input name="BranchCode" value={formData.BranchCode} onChange={handleChange} type="text" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='enter branch code' />
                                                 <label className='font-bold text-gray-500 text-[15px]'>IBAN:</label>
-                                                <input required name="IBAN" value={formData.IBAN} onChange={handleChange} type="number" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='IBAN' />
+                                                <input name="IBAN" value={formData.IBAN} onChange={handleChange} type="number" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='IBAN' />
                                             </div>
                                             <div className="w-full sm:w-[47.5%] flex flex-col gap-1">
                                                 <label className='font-bold text-gray-500 text-[15px]'>Account Title:</label>
-                                                <input required name="AccTitle" value={formData.AccTitle} onChange={handleChange} type="text" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='enter account title' />
+                                                <input name="AccTitle" value={formData.AccTitle} onChange={handleChange} type="text" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='enter account title' />
                                                 <label className='font-bold text-gray-500 text-[15px]'>Branch Name:</label>
-                                                <input required name="BranchName" value={formData.BranchName} onChange={handleChange} type="text" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='enter branch name' />
+                                                <input name="BranchName" value={formData.BranchName} onChange={handleChange} type="text" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='enter branch name' />
                                                 <label className='font-bold text-gray-500 text-[15px]'>Swift Code:</label>
-                                                <input required name="SwiftCode" value={formData.SwiftCode} onChange={handleChange} type="number" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='Swift Code:' />
+                                                <input name="SwiftCode" value={formData.SwiftCode} onChange={handleChange} type="number" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='Swift Code:' />
                                             </div>
                                         </div>
                                     </div>
@@ -311,8 +286,8 @@ export default function SignupVendor() {
                                         <div className="flex flex-col sm:flex-row! w-full gap-1">
                                             <div className="w-full sm:w-full flex flex-col gap-2">
                                                 <label className='font-bold text-gray-500 text-[15px]'>Password:</label>
-                                                <input required name="password" value={formData.password} id="pass" onChange={handleChange} type="password" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='Password' />
-                                                <button className='relative w-fit -top-15 left-[90%]' type='button' onClick={() => {
+                                                <input name="password" value={formData.password} id="pass" onChange={handleChange} type="password" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='Password' />
+                                                {/* <button className='relative w-fit -top-15 left-[90%]' type='button' onClick={() => {
                                                     const input = document.getElementById('pass');
                                                     if (input.type === 'password') {
                                                         input.type = 'text';
@@ -321,19 +296,7 @@ export default function SignupVendor() {
                                                     }
                                                 }}>
                                                     <i className="fa-regular fa-eye"></i>
-                                                </button>
-                                                <label className='font-bold text-gray-500 text-[15px]'>Confirm Password:</label>
-                                                <input ref={confPassRef} id='pass2' required name="confPass" value={formData.confPass} onChange={handleChange} type="password" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='confirm password' />
-                                                <button className='relative w-fit -top-15 left-[90%]' type='button' onClick={() => {
-                                                    const input = document.getElementById('pass2');
-                                                    if (input.type === 'password') {
-                                                        input.type = 'text';
-                                                    } else {
-                                                        input.type = 'password';
-                                                    }
-                                                }}>
-                                                    <i className="fa-regular fa-eye"></i>
-                                                </button>
+                                                </button> */}
                                             </div>
                                         </div>
                                     </div>
@@ -351,7 +314,8 @@ export default function SignupVendor() {
                                     </button>
 
                                     <button
-                                        type="submit"
+                                        onClick={() => addUser()}
+                                        type="button"
                                         className="w-1/2 bg-red-400 text-white rounded py-1"
                                     >
                                         Submit

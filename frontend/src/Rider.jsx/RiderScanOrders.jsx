@@ -259,7 +259,7 @@ export default function RiderScanOrders() {
             console.error('Error assigning rider:', error);
             toast.error(`Failed : ${error.message}`, {
                 position: "top-right",
-                autoClose: 3000,    
+                autoClose: 3000,
                 style: {
                     background: '#d10115',
                     color: 'white',
@@ -287,6 +287,7 @@ export default function RiderScanOrders() {
     }
 
 
+    const [selectedOrderId, setSelectedOrderId] = useState(null);
     const [cancelReasons, setCancelReasons] = useState({
         incompleteAddress: "",
         consigneeNotAvailable: "",
@@ -370,7 +371,7 @@ export default function RiderScanOrders() {
                                                     {/* <td className="p-4 text-center text-nowrap font-semibold">Customer Contact No </td> */}
                                                     {/* <td className="p-4 text-center text-nowrap font-semibold">Delivery Address </td> */}
                                                     <td className="p-4 text-center text-nowrap font-semibold">Add </td>
-                                                    <td className="p-4 text-center text-nowrap font-semibold">Cancel </td>
+                                                    {/* <td className="p-4 text-center text-nowrap font-semibold">Cancel </td> */}
                                                     <td className="p-4 text-center text-nowrap font-semibold">Status </td>
                                                 </tr>
                                             </thead>
@@ -385,140 +386,140 @@ export default function RiderScanOrders() {
                                                     <td className="p-4 text-center text-nowrap">
                                                         <button className='bg-[#041026] text-white p-2 rounded' onClick={() => addShipmentFun(a?._id)}>Add</button>
                                                     </td>
-                                                    <td className="p-4 text-center text-nowrap">
-                                                        <button className='bg-[#d10115] text-white p-2 rounded' onClick={() => setOpenMenuCancelOrder(a?._id)}>Cancel</button>
-                                                    </td>
+                                                    {/* <td className="p-4 text-center text-nowrap">
+                                                        <button className='bg-[#d10115] text-white p-2 rounded' onClick={() => { setOpenMenuCancelOrder(a?._id), setSelectedOrderId(a?._id); }}>Cancel</button>
+                                                    </td> */}
                                                     <td className="p-4 text-center text-nowrap" style={{ color: (a?.status === "pending") ? "green" : "red" }}>{a?.status}</td>
-                                                    <Dialog
-                                                        open={openMenuCancelOrder === a?._id}
-                                                        onClose={() => setOpenMenuCancelOrder(false)}
-                                                        PaperProps={{
-                                                            sx: {
-                                                                width: "50%",
-                                                                maxWidth: "none",
-                                                            }
-                                                        }}
-                                                    >
-                                                        <DialogTitle
-                                                            sx={{
-                                                                paddingY: "10px",
-                                                                width: "100%",
-                                                                display: "flex",
-                                                                flexDirection: "column",
-                                                                alignItems: 'flex-start',
-                                                                gap: "10px",
-                                                            }}
-                                                        >
-                                                            <div className="flex flex-col gap-2 items-center w-full h-auto">
-                                                                <h1>Reason to Cancel: </h1>
-                                                                <form className='flex flex-col gap-2'>
-                                                                    <div>
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            id="incompleteAddress"
-                                                                            name="incompleteAddress"
-                                                                            checked={cancelReasons.incompleteAddress}
-                                                                            onChange={handleCheckboxChange}
-                                                                            className="h-4 w-4 text-blue-600"
-                                                                        />
-                                                                        <label htmlFor="incompleteAddress" className="ml-2">incomplete Address</label>
-                                                                    </div>
-                                                                    <div>
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            id="consigneeNotAvailable"
-                                                                            name="consigneeNotAvailable"
-                                                                            checked={cancelReasons.consigneeNotAvailable}
-                                                                            onChange={handleCheckboxChange}
-                                                                            className="h-4 w-4 text-blue-600"
-                                                                        />
-                                                                        <label htmlFor="consigneeNotAvailable" className="ml-2">consignee Not Available</label>
-                                                                    </div>
-                                                                    <div>
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            id="deliveryAddressClosed"
-                                                                            name="deliveryAddressClosed"
-                                                                            checked={cancelReasons.deliveryAddressClosed}
-                                                                            onChange={handleCheckboxChange}
-                                                                            className="h-4 w-4 text-blue-600"
-                                                                        />
-                                                                        <label htmlFor="deliveryAddressClosed" className="ml-2">delivery Address Closed</label>
-                                                                    </div>
-                                                                    <div>
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            id="noSuchPerson"
-                                                                            name="noSuchPerson"
-                                                                            checked={cancelReasons.noSuchPerson}
-                                                                            onChange={handleCheckboxChange}
-                                                                            className="h-4 w-4 text-blue-600"
-                                                                        />
-                                                                        <label htmlFor="noSuchPerson" className="ml-2">no Such Person</label>
-                                                                    </div>
-                                                                    <div>
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            id="refusedToReceive"
-                                                                            name="refusedToReceive"
-                                                                            checked={cancelReasons.refusedToReceive}
-                                                                            onChange={handleCheckboxChange}
-                                                                            className="h-4 w-4 text-blue-600"
-                                                                        />
-                                                                        <label htmlFor="refusedToReceive" className="ml-2">refused To Receive</label>
-                                                                    </div>
-                                                                    <div>
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            id="restrictedArea"
-                                                                            name="restrictedArea"
-                                                                            checked={cancelReasons.restrictedArea}
-                                                                            onChange={handleCheckboxChange}
-                                                                            className="h-4 w-4 text-blue-600"
-                                                                        />
-                                                                        <label htmlFor="restrictedArea" className="ml-2">restricted Area</label>
-                                                                    </div>
-                                                                    <div>
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            id="incompleteContactDetails"
-                                                                            name="incompleteContactDetails"
-                                                                            checked={cancelReasons.incompleteContactDetails}
-                                                                            onChange={handleCheckboxChange}
-                                                                            className="h-4 w-4 text-blue-600"
-                                                                        />
-                                                                        <label htmlFor="incompleteContactDetails" className="ml-2">incomplete ContactDetails</label>
-                                                                    </div>
-                                                                    <div>
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            id="payementNotAvailable"
-                                                                            name="payementNotAvailable"
-                                                                            checked={cancelReasons.payementNotAvailable}
-                                                                            onChange={handleCheckboxChange}
-                                                                            className="h-4 w-4 text-blue-600"
-                                                                        />
-                                                                        <label htmlFor="payementNotAvailable" className="ml-2">payement Not Available</label>
-                                                                    </div>
-                                                                    <div>
-                                                                        <label htmlFor="otherReason" className="mr-2">Other: </label>
-                                                                        <input
-                                                                            type="text"
-                                                                            id="otherReason"
-                                                                            name="otherReason"
-                                                                            value={cancelReasons.otherReason}
-                                                                            onChange={handleOtherChange}
-                                                                            className="h-6 border-black rounded border text-sm!"
-                                                                        />
-                                                                    </div>
-                                                                    <button className='bg-[#d10115] text-white p-2 rounded' type='button' onClick={() => cancelShipmentFun(a?._id)}>Cancel</button>
-                                                                </form>
-                                                            </div>
-                                                        </DialogTitle>
-                                                    </Dialog>
                                                 </tr>
                                             </tbody>
                                         </table>
+                                        <Dialog
+                                            open={openMenuCancelOrder === a?._id}
+                                            onClose={() => setOpenMenuCancelOrder(false)}
+                                            PaperProps={{
+                                                sx: {
+                                                    width: "50%",
+                                                    maxWidth: "none",
+                                                }
+                                            }}
+                                        >
+                                            <DialogTitle
+                                                sx={{
+                                                    paddingY: "10px",
+                                                    width: "100%",
+                                                    display: "flex",
+                                                    flexDirection: "column",
+                                                    alignItems: 'flex-start',
+                                                    gap: "10px",
+                                                }}
+                                            >
+                                                <div className="flex flex-col gap-2 items-center w-full h-auto">
+                                                    <h1>Reason to Cancel: </h1>
+                                                    <form className='flex flex-col gap-2'>
+                                                        <div>
+                                                            <input
+                                                                type="checkbox"
+                                                                id="incompleteAddress"
+                                                                name="incompleteAddress"
+                                                                checked={cancelReasons.incompleteAddress}
+                                                                onChange={handleCheckboxChange}
+                                                                className="h-4 w-4 text-blue-600"
+                                                            />
+                                                            <label htmlFor="incompleteAddress" className="ml-2">incomplete Address</label>
+                                                        </div>
+                                                        <div>
+                                                            <input
+                                                                type="checkbox"
+                                                                id="consigneeNotAvailable"
+                                                                name="consigneeNotAvailable"
+                                                                checked={cancelReasons.consigneeNotAvailable}
+                                                                onChange={handleCheckboxChange}
+                                                                className="h-4 w-4 text-blue-600"
+                                                            />
+                                                            <label htmlFor="consigneeNotAvailable" className="ml-2">consignee Not Available</label>
+                                                        </div>
+                                                        <div>
+                                                            <input
+                                                                type="checkbox"
+                                                                id="deliveryAddressClosed"
+                                                                name="deliveryAddressClosed"
+                                                                checked={cancelReasons.deliveryAddressClosed}
+                                                                onChange={handleCheckboxChange}
+                                                                className="h-4 w-4 text-blue-600"
+                                                            />
+                                                            <label htmlFor="deliveryAddressClosed" className="ml-2">delivery Address Closed</label>
+                                                        </div>
+                                                        <div>
+                                                            <input
+                                                                type="checkbox"
+                                                                id="noSuchPerson"
+                                                                name="noSuchPerson"
+                                                                checked={cancelReasons.noSuchPerson}
+                                                                onChange={handleCheckboxChange}
+                                                                className="h-4 w-4 text-blue-600"
+                                                            />
+                                                            <label htmlFor="noSuchPerson" className="ml-2">no Such Person</label>
+                                                        </div>
+                                                        <div>
+                                                            <input
+                                                                type="checkbox"
+                                                                id="refusedToReceive"
+                                                                name="refusedToReceive"
+                                                                checked={cancelReasons.refusedToReceive}
+                                                                onChange={handleCheckboxChange}
+                                                                className="h-4 w-4 text-blue-600"
+                                                            />
+                                                            <label htmlFor="refusedToReceive" className="ml-2">refused To Receive</label>
+                                                        </div>
+                                                        <div>
+                                                            <input
+                                                                type="checkbox"
+                                                                id="restrictedArea"
+                                                                name="restrictedArea"
+                                                                checked={cancelReasons.restrictedArea}
+                                                                onChange={handleCheckboxChange}
+                                                                className="h-4 w-4 text-blue-600"
+                                                            />
+                                                            <label htmlFor="restrictedArea" className="ml-2">restricted Area</label>
+                                                        </div>
+                                                        <div>
+                                                            <input
+                                                                type="checkbox"
+                                                                id="incompleteContactDetails"
+                                                                name="incompleteContactDetails"
+                                                                checked={cancelReasons.incompleteContactDetails}
+                                                                onChange={handleCheckboxChange}
+                                                                className="h-4 w-4 text-blue-600"
+                                                            />
+                                                            <label htmlFor="incompleteContactDetails" className="ml-2">incomplete ContactDetails</label>
+                                                        </div>
+                                                        <div>
+                                                            <input
+                                                                type="checkbox"
+                                                                id="payementNotAvailable"
+                                                                name="payementNotAvailable"
+                                                                checked={cancelReasons.payementNotAvailable}
+                                                                onChange={handleCheckboxChange}
+                                                                className="h-4 w-4 text-blue-600"
+                                                            />
+                                                            <label htmlFor="payementNotAvailable" className="ml-2">payement Not Available</label>
+                                                        </div>
+                                                        <div>
+                                                            <label htmlFor="otherReason" className="mr-2">Other: </label>
+                                                            <input
+                                                                type="text"
+                                                                id="otherReason"
+                                                                name="otherReason"
+                                                                value={cancelReasons.otherReason}
+                                                                onChange={handleOtherChange}
+                                                                className="h-6 border-black rounded border text-sm!"
+                                                            />
+                                                        </div>
+                                                        <button className='bg-[#d10115] text-white p-2 rounded' type='button' onClick={() => cancelShipmentFun(selectedOrderId)}>Cancel</button>
+                                                    </form>
+                                                </div>
+                                            </DialogTitle>
+                                        </Dialog>
                                     </div>
                                 ))
                             )

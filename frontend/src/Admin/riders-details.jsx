@@ -1,50 +1,64 @@
-import { useCallback, useEffect } from "react";
+import logo from '../assets/MGC.png';
+import { useCallback, useEffect, useRef } from "react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom"
 import { jsPDF } from 'jspdf';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Dialog, DialogActions, DialogTitle, Button } from '@mui/material'
+
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function RidersDetails() {
     const { rid } = useParams()
-    const [ridersData, setRidersData] = useState()
+    // const [ridersData, setRidersData] = useState()
+
+    const queryClient = useQueryClient()
+
+    const [openMenuAddUser, setOpenMenuAddUser] = useState(false)
+
     const navigate = useNavigate()
 
 
 
     // ------------------------------Getting Riders Data -------------------------------
-    useEffect(() => {
-        async function a() {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                navigate('/');
-                return;
-            }
-
-            const data = await fetch(`http://localhost:3000/riders/${rid}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-            })
-            if (data?.status === 401) {
-                localStorage.removeItem('token');
-                navigate('/');
-                return;
-            }
-            if (data?.status === 403) {
-                // Not authorized (not admin)
-                navigate('/');
-                return;
-            }
-            if (!data?.ok) {
-                throw new Error(`HTTP error! status: ${data.status}`);
-            }
-            const info = await data.json()
-            setRidersData([info?.riders])
-            // console.log(info)
+    async function ridersLogic() {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/');
+            return;
         }
-        a();
-    }, [])
+
+        const data = await fetch(`http://localhost:3000/riders/${rid}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+        })
+        if (data?.status === 401) {
+            localStorage.removeItem('token');
+            navigate('/');
+            return;
+        }
+        if (data?.status === 403) {
+            // Not authorized (not admin)
+            navigate('/');
+            return;
+        }
+        if (!data?.ok) {
+            throw new Error(`HTTP error! status: ${data.status}`);
+        }
+        const info = await data.json()
+        return [info?.riders]
+        // console.log(info)
+    }
+    const { data: ridersData, isLoading: dataLoading, error: dataError, isFetching } = useQuery({
+        queryKey: ['ridersDetail'],
+        queryFn: ridersLogic,
+        retry: 1,
+        refetchOnWindowFocus: false,
+    })
 
 
 
@@ -246,29 +260,62 @@ export default function RidersDetails() {
 
 
 
+    const loadImage = (url) =>
+        new Promise((resolve) => {
+            const img = new Image();
+            img.src = url;
+            img.onload = () => resolve(img);
+        });
+
     // ---------------PDF Generation----------------------------------------
-    const generatePDFDelivery = () => {
+    const generatePDFDelivery = async () => {
         try {
             // Create new PDF
             const pdf = new jsPDF('p', 'mm', 'a4');
 
             // Set margins
-            const margin = 10;
-            const pageWidth = 210;
+            const margin = 5;
+            const pageWidth = 250;
             const pageHeight = 297;
-            const contentWidth = 200;
+            const contentWidth = 190;
             let yPosition = margin;
 
             // Add rider info
             const rider = ridersData?.[0];
 
             // Title
-            pdf.setFontSize(20);
-            pdf.text('RIDER ORDER DELIVERY REPORT', pageWidth / 2, yPosition, { align: 'center' });
+            yPosition += 10;
+
+            const img = await loadImage(logo);
+
+            // Sizes
+            const headingFontSize = 20;
+            const logoHeight = 25;
+            const logoWidth = 70;
+            pdf.setFontSize(headingFontSize);
+            const text = 'Rider\'s Delivery Report';
+            const textWidth = pdf.getTextWidth(text);
+            const gap = 3;
+            const totalWidth = logoWidth + gap + textWidth;
+            const startX = ((pdf.internal.pageSize.getWidth() - totalWidth) / 2) - 40;
+            pdf.addImage(
+                img,
+                'PNG',
+                startX,
+                yPosition - logoHeight + 15, // vertical alignment tweak
+                logoWidth,
+                logoHeight
+            );
+            pdf.text(
+                text,
+                (pageWidth / 2),
+                yPosition
+                , { align: 'center' }
+            );
             yPosition += 10;
 
             pdf.setFontSize(12);
-            pdf.text(`Generated: ${filterStartDateDelivery !== "" || filterEndDateDelivery !== "" ? " from " : ""} ${filterStartDateDelivery !== "" || filterEndDateDelivery !== "" ? filterStartDateDelivery + " to " + filterEndDateDelivery : "All Orders"}`, pageWidth / 2, yPosition, { align: 'center' });
+            pdf.text(`Generated: ${new Date().toLocaleDateString()}`, (pageWidth / 2), yPosition, { align: 'center' });
             yPosition += 15;
 
             // Rider Info Table - NO WRAPPING
@@ -305,7 +352,7 @@ export default function RidersDetails() {
                 pdf.setFontSize(8); // Smaller font for table
 
                 // Table headers
-                const headers = ['Vendor', 'Receiver', 'Delivery Address', 'Order Date', 'Amount', 'Status'];
+                const headers = ['sender', 'Receiver', 'Order Date', 'Amount', 'Status'];
                 let xPosition = margin;
                 const colWidth = contentWidth / headers.length; // Equal column width
 
@@ -334,9 +381,9 @@ export default function RidersDetails() {
                     const row = [
                         order?.creatorName || 'N/A',
                         order?.CustomerName || 'N/A',
-                        order?.DeliveryAddress || 'N/A',
+                        // order?.DeliveryAddress || 'N/A',
                         order?.OrderDate ? new Date(order.OrderDate).toLocaleDateString() : 'N/A',
-                        order?.OrderAmount || '0',
+                        order?.OrderAmount + ' ' + 'Rs' || '0',
                         order?.status || 'N/A'
                     ];
 
@@ -380,7 +427,7 @@ export default function RidersDetails() {
                 const totalAmount = filteredOrdersDelivery.reduce((sum, order) => sum + (parseFloat(order?.OrderAmount) || 0), 0);
                 pdf.setFontSize(10);
                 pdf.text(`Total Amount: ${totalAmount.toFixed(2)}`, margin, yPosition);
-                pdf.text(`Total Orders: ${filteredOrdersDelivery.length}`, pageWidth - margin - 30, yPosition, { align: 'right' });
+                pdf.text(`Total Orders: ${filteredOrdersDelivery.length}`, pageWidth - margin - 60, yPosition, { align: 'right' });
             } else {
                 // No orders message
                 pdf.setFontSize(12);
@@ -395,28 +442,54 @@ export default function RidersDetails() {
             alert('Error generating PDF. Please try again.');
         }
     };
-    const generatePDFPickup = () => {
+    const generatePDFPickup = async () => {
         try {
             // Create new PDF
             const pdf = new jsPDF('p', 'mm', 'a4');
 
             // Set margins
-            const margin = 10;
-            const pageWidth = 210;
+            const margin = 5;
+            const pageWidth = 250;
             const pageHeight = 297;
-            const contentWidth = 200;
+            const contentWidth = 190;
             let yPosition = margin;
 
             // Add rider info
             const rider = ridersData?.[0];
 
             // Title
-            pdf.setFontSize(20);
-            pdf.text('RIDER ORDER PICKUP REPORT', pageWidth / 2, yPosition, { align: 'center' });
+            yPosition += 10;
+
+            const img = await loadImage(logo);
+
+            // Sizes
+            const headingFontSize = 20;
+            const logoHeight = 25;
+            const logoWidth = 70;
+            pdf.setFontSize(headingFontSize);
+            const text = 'Rider\'s Pickup Report';
+            const textWidth = pdf.getTextWidth(text);
+            const gap = 3;
+            const totalWidth = logoWidth + gap + textWidth;
+            const startX = ((pdf.internal.pageSize.getWidth() - totalWidth) / 2) - 40;
+            pdf.addImage(
+                img,
+                'PNG',
+                startX,
+                yPosition - logoHeight + 15, // vertical alignment tweak
+                logoWidth,
+                logoHeight
+            );
+            pdf.text(
+                text,
+                (pageWidth / 2),
+                yPosition
+                , { align: 'center' }
+            );
             yPosition += 10;
 
             pdf.setFontSize(12);
-            pdf.text(`Generated: ${filterStartDatePickup !== "" || filterEndDatePickup !== "" ? " from " : ""} ${filterStartDatePickup !== "" || filterEndDatePickup !== "" ? filterStartDatePickup + " to " + filterEndDatePickup : "All Orders"}`, pageWidth / 2, yPosition, { align: 'center' });
+            pdf.text(`Generated: ${new Date().toLocaleDateString()}`, (pageWidth / 2), yPosition, { align: 'center' });
             yPosition += 15;
 
             // Rider Info Table - NO WRAPPING
@@ -453,7 +526,7 @@ export default function RidersDetails() {
                 pdf.setFontSize(8); // Smaller font for table
 
                 // Table headers
-                const headers = ['Vendor', 'Receiver', 'Delivery Address', 'Order Date', 'Amount', 'Status'];
+                const headers = ['sender', 'Receiver', 'Order Date', 'Amount', 'Status'];
                 let xPosition = margin;
                 const colWidth = contentWidth / headers.length; // Equal column width
 
@@ -482,7 +555,7 @@ export default function RidersDetails() {
                     const row = [
                         order?.creatorName || 'N/A',
                         order?.CustomerName || 'N/A',
-                        order?.DeliveryAddress || 'N/A',
+                        // order?.DeliveryAddress || 'N/A',
                         order?.OrderDate ? new Date(order.OrderDate).toLocaleDateString() : 'N/A',
                         order?.OrderAmount || '0',
                         order?.status || 'N/A'
@@ -528,7 +601,7 @@ export default function RidersDetails() {
                 const totalAmount = filteredOrdersPickup.reduce((sum, order) => sum + (parseFloat(order?.OrderAmount) || 0), 0);
                 pdf.setFontSize(10);
                 pdf.text(`Total Amount: ${totalAmount.toFixed(2)}`, margin, yPosition);
-                pdf.text(`Total Orders: ${filteredOrdersPickup.length}`, pageWidth - margin - 30, yPosition, { align: 'right' });
+                pdf.text(`Total Orders: ${filteredOrdersPickup.length}`, pageWidth - margin - 60, yPosition, { align: 'right' });
             } else {
                 // No orders message
                 pdf.setFontSize(12);
@@ -543,28 +616,54 @@ export default function RidersDetails() {
             alert('Error generating PDF. Please try again.');
         }
     };
-    const generatePDFReturn = () => {
+    const generatePDFReturn = async () => {
         try {
             // Create new PDF
             const pdf = new jsPDF('p', 'mm', 'a4');
 
             // Set margins
-            const margin = 10;
-            const pageWidth = 210;
+            const margin = 5;
+            const pageWidth = 250;
             const pageHeight = 297;
-            const contentWidth = 200;
+            const contentWidth = 190;
             let yPosition = margin;
 
             // Add rider info
             const rider = ridersData?.[0];
 
             // Title
-            pdf.setFontSize(20);
-            pdf.text('RIDER ORDER RETURN REPORT', pageWidth / 2, yPosition, { align: 'center' });
+            yPosition += 10;
+
+            const img = await loadImage(logo);
+
+            // Sizes
+            const headingFontSize = 20;
+            const logoHeight = 25;
+            const logoWidth = 70;
+            pdf.setFontSize(headingFontSize);
+            const text = 'Rider\'s Return Report';
+            const textWidth = pdf.getTextWidth(text);
+            const gap = 3;
+            const totalWidth = logoWidth + gap + textWidth;
+            const startX = ((pdf.internal.pageSize.getWidth() - totalWidth) / 2) - 40;
+            pdf.addImage(
+                img,
+                'PNG',
+                startX,
+                yPosition - logoHeight + 15, // vertical alignment tweak
+                logoWidth,
+                logoHeight
+            );
+            pdf.text(
+                text,
+                (pageWidth / 2),
+                yPosition
+                , { align: 'center' }
+            );
             yPosition += 10;
 
             pdf.setFontSize(12);
-            pdf.text(`Generated: ${filterStartDateReturn !== "" || filterEndDateReturn !== "" ? " from " : ""} ${filterStartDateReturn !== "" || filterEndDateReturn !== "" ? filterStartDateReturn + " to " + filterEndDateReturn : "All Orders"}`, pageWidth / 2, yPosition, { align: 'center' });
+            pdf.text(`Generated: ${new Date().toLocaleDateString()}`, (pageWidth / 2), yPosition, { align: 'center' });
             yPosition += 15;
 
             // Rider Info Table - NO WRAPPING
@@ -601,7 +700,7 @@ export default function RidersDetails() {
                 pdf.setFontSize(8); // Smaller font for table
 
                 // Table headers
-                const headers = ['Vendor', 'Receiver', 'Delivery Address', 'Order Date', 'Amount', 'Status'];
+                const headers = ['sender', 'Receiver', 'Order Date', 'Amount', 'Status'];
                 let xPosition = margin;
                 const colWidth = contentWidth / headers.length; // Equal column width
 
@@ -630,9 +729,9 @@ export default function RidersDetails() {
                     const row = [
                         order?.creatorName || 'N/A',
                         order?.CustomerName || 'N/A',
-                        order?.DeliveryAddress || 'N/A',
+                        // order?.DeliveryAddress || 'N/A',
                         order?.OrderDate ? new Date(order.OrderDate).toLocaleDateString() : 'N/A',
-                        order?.OrderAmount || '0',
+                        order?.OrderAmount + ' ' + 'Rs' || '0',
                         order?.status || 'N/A'
                     ];
 
@@ -676,7 +775,7 @@ export default function RidersDetails() {
                 const totalAmount = filteredOrdersReturn.reduce((sum, order) => sum + (parseFloat(order?.OrderAmount) || 0), 0);
                 pdf.setFontSize(10);
                 pdf.text(`Total Amount: ${totalAmount.toFixed(2)}`, margin, yPosition);
-                pdf.text(`Total Orders: ${filteredOrdersReturn.length}`, pageWidth - margin - 30, yPosition, { align: 'right' });
+                pdf.text(`Total Orders: ${filteredOrdersReturn.length}`, pageWidth - margin - 60, yPosition, { align: 'right' });
             } else {
                 // No orders message
                 pdf.setFontSize(12);
@@ -693,7 +792,156 @@ export default function RidersDetails() {
     };
 
 
+    const [formData, setFormData] = useState({
+        RiderName: "",
+        ContactNo: "",
+        EmailAddress: "",
+        VehicleDetails: "",
+        LicenseNo: "",
+        RiderRefrenceNumber: "rider" + Date.now().toString().slice(5, 13),
+        AssignedArea: "",
+        password: "",
+        cnic: "",
+    });
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+    };
+    async function addRiderLogic() {
+        const data = await fetch(`http://localhost:3000/riders/${rid}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({
+                ridersName: formData.RiderName,
+                contactNo: formData.ContactNo,
+                emailAddress: formData.EmailAddress,
+                vehicle: formData.VehicleDetails,
+                licenseNo: formData.LicenseNo,
+                assignedArea: formData.AssignedArea,
+                password: formData.password,
+                cnic: formData.cnic,
+            })
+        })
+        if (data?.status === 401) {
+            localStorage.removeItem('token');
+            navigate('/');
+            return;
+        }
+        if (data?.status === 403) {
+            // Not authorized (not admin)
+            navigate('/');
+            return;
+        }
+        if (!data?.ok) {
+            throw new Error(`HTTP error! status: ${data.status}`);
+        }
+    }
+    const addRiderMutation = useMutation({
+        mutationFn: addRiderLogic,
+        onSuccess: () => {
+            setFormData({
+                RiderName: "",
+                ContactNo: "",
+                EmailAddress: "",
+                VehicleDetails: "",
+                LicenseNo: "",
+                RiderRefrenceNumber: "",
+                AssignedArea: "",
+                password: "",
+                cnic: "",
+            });
+            setOpenMenuAddUser(false);
+            queryClient.invalidateQueries({ queryKey: ['riders'] });
+        },
+        onError: (error) => {
+            console.error('Error:', error);
+            toast.error(`Failed : ${error.message}`, {
+                position: "top-right",
+                autoClose: 3000,
+                style: {
+                    background: '#d10115',
+                    color: 'white',
+                },
+            })
+        }
+    })
+    function addRider() {
+        addRiderMutation.mutate()
+    }
 
+    const [page1, setpage1] = useState(0)
+    function nextpage1() {
+        if (!formRef.current) return;
+        if (formRef.current.checkValidity()) {
+            setpage1(prev => Math.min(prev + 1, 2));
+        } else {
+            formRef.current.reportValidity();
+        }
+    }
+    function prevpage1() {
+        setpage1(prev => Math.max(prev - 1, 0));
+    }
+    const formRef = useRef(null);
+
+
+    async function blockUserLogic({ id, status }) {
+        try {
+            const response = await fetch(`http://localhost:3000/riders/${id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({
+                    status: status,
+                })
+            });
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to update order status');
+            }
+            // toast.success("Order Confirmed Successfully!", {
+            //     position: "top-right",
+            //     autoClose: 3000,
+            // })
+        } catch (error) {
+            console.error('Error confirming order:', error);
+            // toast.error(`Failed to confirm order: ${error.message}`, {
+            //     position: "top-right",
+            //     autoClose: 3000,
+            //     style: {
+            //         background: '#d10115',
+            //         color: 'white',
+            //     },
+            // })
+        }
+    }
+    const blockUserMutation = useMutation({
+        mutationFn: blockUserLogic,
+        onSuccess: (data, variables) => {
+            console.log(data)
+            queryClient.invalidateQueries({ queryKey: ['riders'] });
+            navigate('/admin/riders')
+        },
+        onError: (error) => {
+            console.error('Error assigning rider:', error);
+            // toast.error(`Failed to confirm: ${error.message}`, {
+            //     position: "top-right",
+            //     autoClose: 3000,
+            //     style: {
+            //         background: '#d10115',
+            //         color: 'white',
+            //     },
+            // })
+        }
+    })
+    function blockUserFun(id, status) {
+        blockUserMutation.mutate({ id, status })
+    }
+    const isBlocking = blockUserMutation.isPending;
 
 
     // -------------------------Timer----------------------------------
@@ -756,6 +1004,7 @@ export default function RidersDetails() {
             {
                 ridersData?.map((a) => (
                     <>
+                        <ToastContainer />
                         <div key={a?._id} className="overflow-y-scroll bg-gray-100 flex flex-col gap-4 p-4 justify-start items-start w-7/8! sm:w-3/4 h-screen">
                             <div className="w-full flex gap-2">
                                 <div className="flex-1 rounded-lg p-4 text-white bg-linear-to-r from-gray-600 to-gray-800">
@@ -772,8 +1021,109 @@ export default function RidersDetails() {
                                         <h5>{a?.contactNo}</h5>
                                     </div>
                                     <div>
-                                        <h4>Cnic No :</h4>
-                                        <h5>{a?.cnic}</h5>
+                                        <button disabled={isBlocking} style={{ backgroundColor: a?.status !== "BlockedRider" ? "#B91C1C" : "blue" }} className='rounded p-2' onClick={() => {
+                                            a?.status === "BlockedRider" ? blockUserFun(a?._id, 'rider') : blockUserFun(a?._id, 'BlockedRider')
+                                        }}>
+                                            {
+                                                (isBlocking || isFetching) ? 'Deleting..' : a?.status === "BlockedRider" ? "Undo Delete" : "Delete"
+                                            }
+                                        </button>
+                                        <button onClick={() => setOpenMenuAddUser(true)} className="ml-2! bg-[#d10115] text-gray-100 font-medium py-2 px-4 rounded text-nowrap">Update Rider</button>
+                                        <Dialog
+                                            open={openMenuAddUser}
+                                            onClose={() => setOpenMenuAddUser(false)}
+                                            md
+                                            maxWidth={false}
+                                        >
+                                            <DialogTitle
+                                                sx={{
+                                                    paddingY: "10px",
+                                                    width: "45vw",
+                                                    display: "flex",
+                                                    flexDirection: "column",
+                                                    alignItems: 'flex-start',
+                                                    gap: "1px",
+                                                }}
+                                            >
+                                                <div className="w-full flex flex-col gap-0 items-start">
+                                                    {/* <h3 className='! text-md! font-medium!' > Create Rider Account </h3> */}
+                                                    <form ref={formRef} className='w-full flex flex-col'>
+                                                        <div className="flex gap-[5%]">
+                                                            <div className="w-full">
+                                                                {page1 === 0 && (
+                                                                    <fieldset disabled={page1 !== 0}>
+                                                                        <label className=' text-[17px]'>Rider Name:</label>
+                                                                        <input name="RiderName" value={formData.RiderName} onChange={handleChange} type="text" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='Rider Name' />
+                                                                        <label className=' text-[17px]'>Contact No:</label>
+                                                                        <input name="ContactNo" value={formData.ContactNo} onChange={handleChange} type="text" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='Contact No' />
+                                                                        <label className=' text-[17px]'>Email Address:</label>
+                                                                        <input name="EmailAddress" value={formData.EmailAddress} onChange={handleChange} type="text" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='Email Address' />
+                                                                        <label className=' text-[17px]'>Vehicle:</label>
+                                                                        <input name="VehicleDetails" value={formData.VehicleDetails} onChange={handleChange} type="text" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='BIKE (no-plate)' />
+                                                                        <label className=' text-[17px]'>License No:</label>
+                                                                        <input name="LicenseNo" value={formData.LicenseNo} onChange={handleChange} type="text" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='License Number' />
+                                                                        <label className=' text-[17px]'>Assigned Area:</label>
+                                                                        <input name="AssignedArea" value={formData.AssignedArea} onChange={handleChange} type="text" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='Assigned Area' />
+                                                                    </fieldset>)}
+                                                                {page1 === 1 && (
+                                                                    <fieldset disabled={page1 !== 1}>
+                                                                        <label className=' text-[17px]'>Password:</label>
+                                                                        <input name="password" value={formData.password} onChange={handleChange} type="password" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='password' />
+                                                                        <label className=' text-[17px]'>Cnic:</label>
+                                                                        <input name="cnic" value={formData.cnic} onChange={handleChange} type="text" className='text-gray-900 h-13! focus:outline-blue-500! mb-2! shadow-sm shadow-black/20 border w-full rounded py-2 pl-3 text-[17px]!' placeholder='cnic' />
+                                                                    </fieldset>)}
+                                                            </div>
+                                                        </div>
+                                                        {page1 === 1 ? (
+                                                            <div className="flex w-full gap-2 py-3">
+                                                                <button
+                                                                    type="button"
+                                                                    disabled={page1 === 0}
+                                                                    onClick={prevpage1}
+                                                                    className="w-1/2 bg-blue-400 text-white rounded py-1"
+                                                                >
+                                                                    Back
+                                                                </button>
+
+                                                                <button
+                                                                    type="button"
+                                                                    className="w-1/2 bg-red-400 text-white rounded py-1"
+                                                                    onClick={addRider}
+                                                                >
+                                                                    Submit
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex w-full gap-3 py-3">
+                                                                <button
+                                                                    type="button"
+                                                                    disabled={page1 === 0}
+                                                                    onClick={prevpage1}
+                                                                    className={`w-1/2 ${page1 === 0 ? "bg-gray-400 cursor-not-allowed" : "bg-blue-400 cursor-pointer"} text-white rounded py-1`}
+                                                                >
+                                                                    Back
+                                                                </button>
+
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={nextpage1}
+                                                                    className={`w-1/2 text-white rounded py-1 bg-red-400!`}
+                                                                >
+                                                                    NEXT
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </form>
+                                                </div>
+                                            </DialogTitle>
+                                        </Dialog>
+                                        <button disabled={isBlocking} style={{ backgroundColor: a?.status === "activeRider" ? "#991B1B" : "blue" }} className='ml-2! bg-red-700 rounded p-2' onClick={() => {
+                                            a?.status === "activeRider" ? blockUserFun(a?._id, 'rider') : blockUserFun(a?._id, 'activeRider')
+                                        }}>
+                                            {
+                                                (isBlocking || isFetching) ? 'Pending..' : a?.status === "activeRider" ? "Inactivate" : "Activate"
+                                            }
+                                        </button>
                                     </div>
                                 </div>
                                 <div className="flex-1 rounded-lg p-4 text-white bg-linear-to-r from-gray-700 to-gray-900">
@@ -790,6 +1140,10 @@ export default function RidersDetails() {
                                         <h5>{a?.emailAddress}</h5>
                                     </div>
                                     <div>
+                                        <h4>Cnic No :</h4>
+                                        <h5>{a?.cnic}</h5>
+                                    </div>
+                                    <div>
                                         {/* <h4>Rider Id :</h4>
                                         <h5>{a?._id}</h5> */}
                                     </div>
@@ -797,15 +1151,15 @@ export default function RidersDetails() {
                             </div>
 
                             <div className="w-full flex gap-2 text-white">
-                                    <button onClick={()=> setPage(0)} className={`font-bold text-lg! w-1/3! ${page === 0 ?"bg-red-700":"bg-red-500"} py-2 rounded`}>
-                                        Delivered
-                                    </button>
-                                    <button onClick={()=> setPage(1)} className={`font-bold text-lg! w-1/3! ${page === 1 ?"bg-red-700":"bg-red-500"} py-2 rounded`}>
-                                        Pickup
-                                    </button>
-                                    <button onClick={()=> setPage(2)} className={`font-bold text-lg! w-1/3! ${page === 2 ?"bg-red-700":"bg-red-500"} py-2 rounded`}>
-                                        Return
-                                    </button>
+                                <button onClick={() => setPage(0)} className={`font-bold text-lg! w-1/3! ${page === 0 ? "bg-[#162A59]" : "bg-[#1E3A8A]"} py-2 rounded`}>
+                                    Delivered
+                                </button>
+                                <button onClick={() => setPage(1)} className={`font-bold text-lg! w-1/3! ${page === 1 ? "bg-[#162A59]" : "bg-[#1E3A8A]"} py-2 rounded`}>
+                                    Pickup
+                                </button>
+                                <button onClick={() => setPage(2)} className={`font-bold text-lg! w-1/3! ${page === 2 ? "bg-[#162A59]" : "bg-[#1E3A8A]"} py-2 rounded`}>
+                                    Return
+                                </button>
                             </div>
 
                             {
@@ -829,7 +1183,6 @@ export default function RidersDetails() {
                                                     <tr>
                                                         <td className="p-4 text-center text-nowrap font-semibold">Sender Name </td>
                                                         <td className="p-4 text-center text-nowrap font-semibold">Receiver Name </td>
-                                                        <td className="p-4 text-center text-nowrap font-semibold">Delivery Address </td>
                                                         <td className="p-4 text-center text-nowrap font-semibold">Order tracking Id </td>
                                                         {/* <td className="p-4 text-center text-nowrap font-semibold">Time </td> */}
                                                         <td className="p-4 text-center text-nowrap font-semibold">Order Date </td>
@@ -839,7 +1192,7 @@ export default function RidersDetails() {
                                                         <td className="p-4 text-center text-nowrap font-semibold">Order Amount</td>
                                                         <td className="p-4 text-center text-nowrap font-semibold">Delivery Address </td>
                                                         <td className="p-4 text-center text-nowrap font-semibold">Status</td>
-                                                        <td className="p-4 text-center text-nowrap font-semibold">Items </td>
+                                                        <td className="p-4 text-center text-nowrap font-semibold">Dimensions </td>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -848,18 +1201,17 @@ export default function RidersDetails() {
                                                             <tr>
                                                                 <td className="p-4 text-center text-nowrap">{a?.creatorName}</td>
                                                                 <td className="p-4 text-center text-nowrap">{a?.CustomerName}</td>
-                                                                <td className="p-4 text-center text-nowrap">{a?.DeliveryAddress}</td>
                                                                 <td className="p-4 text-center text-nowrap">{a?.trackingId}</td>
                                                                 {/* <td className="p-4 text-center text-nowrap">{timerFun(a?.RiderAssignedDate, a?.RiderDeliveredDate)}</td> */}
                                                                 <td className="p-4 text-center text-nowrap">{a?.OrderDate}</td>
                                                                 <td className="p-4 text-center text-nowrap">{a?.CustomerContactNo}</td>
-                                                                <td className="p-4 text-center text-nowrap">{a?.PickupAddress}</td>
+                                                                <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.PickupAddress}</td>
 
                                                                 <td className="p-4 text-center text-nowrap">{a?.OrderType}</td>
-                                                                <td className="p-4 text-center text-nowrap">{a?.OrderAmount}</td>
-                                                                <td className="p-4 text-center text-nowrap">{a?.DeliveryAddress}</td>
+                                                                <td className="p-4 text-center text-nowrap">{a?.OrderAmount + ' ' + 'Rs'}</td>
+                                                                <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.DeliveryAddress}</td>
                                                                 <td className="p-4 text-center text-nowrap">{a?.status}</td>
-                                                                <td className="p-4 text-center text-nowrap">{a?.Items}</td>
+                                                                <td className="p-4 text-center text-nowrap">{a?.Dimensions}</td>
                                                             </tr>
                                                         ))
                                                     }
@@ -894,7 +1246,6 @@ export default function RidersDetails() {
                                                     <tr>
                                                         <td className="p-4 text-center text-nowrap font-semibold">Sender Name </td>
                                                         <td className="p-4 text-center text-nowrap font-semibold">Receiver Name </td>
-                                                        <td className="p-4 text-center text-nowrap font-semibold">Delivery Address </td>
                                                         <td className="p-4 text-center text-nowrap font-semibold">Order tracking Id </td>
                                                         {/* <td className="p-4 text-center text-nowrap font-semibold">Time </td> */}
                                                         <td className="p-4 text-center text-nowrap font-semibold">Order Date </td>
@@ -904,7 +1255,7 @@ export default function RidersDetails() {
                                                         <td className="p-4 text-center text-nowrap font-semibold">Order Amount</td>
                                                         <td className="p-4 text-center text-nowrap font-semibold">Delivery Address </td>
                                                         <td className="p-4 text-center text-nowrap font-semibold">Status</td>
-                                                        <td className="p-4 text-center text-nowrap font-semibold">Items </td>
+                                                        <td className="p-4 text-center text-nowrap font-semibold">Dimensions </td>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -913,18 +1264,17 @@ export default function RidersDetails() {
                                                             <tr>
                                                                 <td className="p-4 text-center text-nowrap">{a?.creatorName}</td>
                                                                 <td className="p-4 text-center text-nowrap">{a?.CustomerName}</td>
-                                                                <td className="p-4 text-center text-nowrap">{a?.DeliveryAddress}</td>
                                                                 <td className="p-4 text-center text-nowrap">{a?.trackingId}</td>
                                                                 {/* <td className="p-4 text-center text-nowrap">{timerFun(a?.RiderAssignedDate, a?.RiderDeliveredDate)}</td> */}
                                                                 <td className="p-4 text-center text-nowrap">{a?.OrderDate}</td>
                                                                 <td className="p-4 text-center text-nowrap">{a?.CustomerContactNo}</td>
-                                                                <td className="p-4 text-center text-nowrap">{a?.PickupAddress}</td>
+                                                                <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.PickupAddress}</td>
 
                                                                 <td className="p-4 text-center text-nowrap">{a?.OrderType}</td>
-                                                                <td className="p-4 text-center text-nowrap">{a?.OrderAmount}</td>
-                                                                <td className="p-4 text-center text-nowrap">{a?.DeliveryAddress}</td>
+                                                                <td className="p-4 text-center text-nowrap">{a?.OrderAmount + ' ' + 'Rs'}</td>
+                                                                <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.DeliveryAddress}</td>
                                                                 <td className="p-4 text-center text-nowrap">{a?.status}</td>
-                                                                <td className="p-4 text-center text-nowrap">{a?.Items}</td>
+                                                                <td className="p-4 text-center text-nowrap">{a?.Dimensions}</td>
                                                             </tr>
                                                         ))
                                                     }
@@ -957,7 +1307,6 @@ export default function RidersDetails() {
                                                     <tr>
                                                         <td className="p-4 text-center text-nowrap font-semibold">Sender Name </td>
                                                         <td className="p-4 text-center text-nowrap font-semibold">Receiver Name </td>
-                                                        <td className="p-4 text-center text-nowrap font-semibold">Delivery Address </td>
                                                         <td className="p-4 text-center text-nowrap font-semibold">Order tracking Id </td>
                                                         {/* <td className="p-4 text-center text-nowrap font-semibold">Time </td> */}
                                                         <td className="p-4 text-center text-nowrap font-semibold">Order Date </td>
@@ -967,7 +1316,7 @@ export default function RidersDetails() {
                                                         <td className="p-4 text-center text-nowrap font-semibold">Order Amount</td>
                                                         <td className="p-4 text-center text-nowrap font-semibold">Delivery Address </td>
                                                         <td className="p-4 text-center text-nowrap font-semibold">Status</td>
-                                                        <td className="p-4 text-center text-nowrap font-semibold">Items </td>
+                                                        <td className="p-4 text-center text-nowrap font-semibold">Dimensions </td>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -976,18 +1325,17 @@ export default function RidersDetails() {
                                                             <tr>
                                                                 <td className="p-4 text-center text-nowrap">{a?.creatorName}</td>
                                                                 <td className="p-4 text-center text-nowrap">{a?.CustomerName}</td>
-                                                                <td className="p-4 text-center text-nowrap">{a?.DeliveryAddress}</td>
                                                                 <td className="p-4 text-center text-nowrap">{a?.trackingId}</td>
                                                                 {/* <td className="p-4 text-center text-nowrap">{timerFun(a?.RiderAssignedDate, a?.RiderDeliveredDate)}</td> */}
                                                                 <td className="p-4 text-center text-nowrap">{a?.OrderDate}</td>
                                                                 <td className="p-4 text-center text-nowrap">{a?.CustomerContactNo}</td>
-                                                                <td className="p-4 text-center text-nowrap">{a?.PickupAddress}</td>
+                                                                <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.PickupAddress}</td>
 
                                                                 <td className="p-4 text-center text-nowrap">{a?.OrderType}</td>
-                                                                <td className="p-4 text-center text-nowrap">{a?.OrderAmount}</td>
-                                                                <td className="p-4 text-center text-nowrap">{a?.DeliveryAddress}</td>
+                                                                <td className="p-4 text-center text-nowrap">{a?.OrderAmount + ' ' + 'Rs'}</td>
+                                                                <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.DeliveryAddress}</td>
                                                                 <td className="p-4 text-center text-nowrap">{a?.status}</td>
-                                                                <td className="p-4 text-center text-nowrap">{a?.Items}</td>
+                                                                <td className="p-4 text-center text-nowrap">{a?.Dimensions}</td>
                                                             </tr>
                                                         ))
                                                     }

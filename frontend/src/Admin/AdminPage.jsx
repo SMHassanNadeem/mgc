@@ -153,7 +153,7 @@ export default function Chart() {
     }
 
     // 1. Calculate basic stats
-    const totalEarnings = orders.filter(st => st?.status === "Order - Done").reduce((sum, order) =>
+    const totalEarnings = orders.filter(st => st?.status === "Return - Rider Delivered").reduce((sum, order) =>
       sum + (parseFloat(order.OrderAmount) || 0), 0
     );
 
@@ -164,17 +164,17 @@ export default function Chart() {
     // 2. Count orders by status - FIXED VERSION
     const pendingOrders = orders.filter(order => {
       const status = (order.status || '').toLowerCase();
-      return status !== '' && status !== 'order - done' && status !== 'shipment - canceled';
+      return status !== '' && status !== 'return - rider delivered' && status !== 'shipment - cancelled by vendor' && status === 'return - back to vendor';
     }).length;
 
     const completedOrders = orders.filter(order => {
       const status = (order.status || '').toLowerCase();
-      return status === 'order - done';
+      return status === 'return - rider delivered';
     }).length;
 
     const canceledOrders = orders.filter(order => {
       const status = (order.status || '').toLowerCase();
-      return status === 'shipment - canceled';
+      return status === 'shipment - cancelled by vendor' || status === 'return - back to vendor' ;
     }).length;
 
     // 3. Group orders by month
@@ -194,7 +194,7 @@ export default function Chart() {
     }
 
     // Process orders
-    orders.forEach(order => {    //.filter(st => st?.status === "Order - Done")
+    orders.forEach(order => {    //.filter(st => st?.status === "Return - Rider Delivered")
       if (order.OrderDate) {
         try {
           const orderDate = new Date(order.OrderDate);
@@ -394,7 +394,7 @@ export default function Chart() {
               <i className="fas fa-sack-dollar text-green-600"></i>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Total Cash Handled</p>
+              <p className="text-sm text-gray-500">Total Cash Delivered</p>
               <p className="text-2xl font-bold">Rs {stats.totalEarnings.toLocaleString()}</p>
             </div>
           </div>
@@ -463,7 +463,7 @@ export default function Chart() {
 
         {/* Monthly Orders */}
         <div className="bg-white rounded-lg shadow p-4 lg:col-span-2">
-          <h3 className="text-lg font-semibold mb-4">Monthly Done Orders</h3>
+          <h3 className="text-lg font-semibold mb-4">Monthly Orders</h3>
           <div className="h-64">
             <Bar data={barChartData} options={barChartOptions} />
           </div>

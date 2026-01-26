@@ -328,7 +328,7 @@ export default function WarehouseScanner() {
                       <td className="p-4 text-center text-nowrap font-semibold">Order Date </td>
                       <td className="p-4 text-center text-nowrap font-semibold">Receiver Contact No </td>
                       <td className="p-4 text-center text-nowrap font-semibold">Delivery Address </td>
-                      <td className="p-4 text-center text-nowrap font-semibold">Items </td>
+                      <td className="p-4 text-center text-nowrap font-semibold">Dimensions </td>
                       <td className="p-4 text-center text-nowrap font-semibold">Status </td>
                     </tr>
                   </thead>
@@ -351,8 +351,8 @@ export default function WarehouseScanner() {
                           </td>
                           <td className="p-4 text-center text-nowrap">{a?.OrderDate}</td>
                           <td className="p-4 text-center text-nowrap">{a?.CustomerContactNo}</td>
-                          <td className="p-4 text-center text-nowrap">{a?.DeliveryAddress}</td>
-                          <td className="p-4 text-center text-nowrap">{a?.Items}</td>
+                          <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.DeliveryAddress}</td>
+                          <td className="p-4 text-center text-nowrap">{a?.Dimensions}</td>
                           <td className="p-4 text-center text-nowrap" style={{ color: (a?.status === "pending") ? "green" : "red" }}>{a?.status}</td>
                         </tr>
                       ))

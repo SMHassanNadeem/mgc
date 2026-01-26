@@ -4,16 +4,16 @@ export default function Footer() {
     const navigate = useNavigate()
     return (
         <>
-            <div className='py-15 flex items-center justify-center bg-[#ff3f39] text-gray-100 w-full h-10 text-center'>
+            <div className=' print:hidden! py-15 flex items-center justify-center bg-[#ff3f39] text-gray-100 w-full h-10 text-center'>
                 <div className="w-300 flex justify-between items-center">
-                    <p className='m-0 text-2xl font-bold'>Subscribe to our Newsletter!</p>
+                    {/* <p className='m-0 text-2xl font-bold'>Subscribe to our Newsletter!</p>
                     <form className='flex flex-nowrap'>
                         <input placeholder='enter your email address' className='bg-white w-50 md:w-80! h-15 pl-5 text-black!' type="text" />
                         <button type='submit' className='bg-[#041026] px-0 md:px-10! py-3 text-xl!'>Subscribe</button>
-                    </form>
+                    </form> */}
                 </div>
             </div>
-            <div style={{ fontFamily: 'poppins' }} className="bg-[#041026] flex justify-center text-gray-100 w-full z-1">
+            <div style={{ fontFamily: 'poppins' }} className=" print:hidden! bg-[#041026] flex justify-center text-gray-100 w-full z-1">
                 <div className="w-195 sm:w-310! h-100 flex flex-col sm:flex-row! justify-around px-2 py-25">
                     <div className="flex flex-col gap-3">
                         <img className="w-45 -ml-5" src={logo} alt="logo" />

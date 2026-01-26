@@ -51,7 +51,7 @@ export default function VendorsManagement() {
         return info;
     }
     const { data: apiData, isLoading: ridersLoading, error: ridersError } = useQuery({
-        queryKey: ['order'],
+        queryKey: ['vendor-order'],
         queryFn: getRidersLogic,
         retry: 1,
         refetchOnWindowFocus: false,

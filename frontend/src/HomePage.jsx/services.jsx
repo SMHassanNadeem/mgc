@@ -6,7 +6,7 @@ export default function Services() {
         <>
             {/* -------------------- Services -------------------------------- */}
             {/* For Mobile */}
-            <div onClick={() => navigate('/order-form')} className="flex xl:hidden! flex-col items-center gap-3 py-30">
+            <div onClick={() => navigate('/form-loader')} className="flex xl:hidden! flex-col items-center gap-3 py-30">
                 <p className="m-0 font-bold text-white px-3 py-1 bg-[#ff3f39] -skew-x-20">OUR SERVICES</p>
                 <h1 className="font-extrabold! text-gray-900!">We provide full assistance</h1>
 
@@ -32,7 +32,7 @@ export default function Services() {
                             <h1 className="font-bold!">Land Express</h1>
                             <h5 className="m-0 text-justify">Our non-asset based Land network provides you with flexibility, improved service and accelerated delivery</h5>
                             <button
-                                onClick={() => navigate('/order-form')}
+                                onClick={() => navigate('/form-loader')}
                                 style={{ fontFamily: 'poppins' }}
                                 className="w-40 h-15! rounded-xl! m-0 text-xl! text-nowrap transition-all duration-300 ease-in-out text-gray-100 bg-[#d10115] hover:bg-[#ff3f39]"
                             >

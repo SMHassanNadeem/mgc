@@ -120,17 +120,17 @@ export default function RiderNavbar() {
             </div>
             <div className="gap-3 pr-3 hidden xl:flex">
                 <button onClick={() => navigate('/rider')} className="text-nowrap border-b border-gray-200 w-full flex justify-between py-3 pl-4 font-medium text-lg">Dashboard</button>
-                <button onClick={() => navigate('/rider/assigned-orders')} className="text-nowrap border-b border-gray-200 w-full flex items-center justify-between py-3 pl-4 font-medium text-lg">
+                <button onClick={() => { queryClient.invalidateQueries({ queryKey: ['assignedOrdersToPick'] }), navigate('/rider/assigned-orders'), localStorage.removeItem('newPickupNotif'), setNewPickupNotif(0) }} className="text-nowrap border-b border-gray-200 w-full flex items-center justify-between py-3 pl-4 font-medium text-lg">
                     Pickup
                     <i className={`ml-1 ${newPickupNotif > 0 ? "bg-red-500 text-white flex justify-center items-center w-5 h-5 rounded-[50%]!" : null}`}>{newPickupNotif > 0 ? newPickupNotif : null}</i>
                 </button>
                 <button onClick={() => navigate('/rider/scan-orders')} className="text-nowrap border-b border-gray-200 w-full flex items-center justify-between py-3 pl-4 font-medium text-lg">Scan for Pickup</button>
 
-                <button onClick={() => navigate('/rider/delivery')} className="text-nowrap border-b border-gray-200 w-full flex items-center justify-between py-3 pl-4 font-medium text-lg">
+                <button onClick={() => { queryClient.invalidateQueries({ queryKey: ['assignedOrdersToDeliver'] }), navigate('/rider/delivery'), localStorage.removeItem('newDeliveryNotif'), setNewDeliveryNotif(0) }} className="text-nowrap border-b border-gray-200 w-full flex items-center justify-between py-3 pl-4 font-medium text-lg">
                     Delivery
                     <i className={`ml-1 ${newDeliveryNotif > 0 ? "bg-red-500 text-white flex justify-center items-center w-5 h-5 rounded-[50%]!" : null}`}>{newDeliveryNotif > 0 ? newDeliveryNotif : null}</i>
                 </button>
-                <button onClick={() => navigate('/rider/return')} className="text-nowrap border-b border-gray-200 w-full flex justify-between py-3 pl-4 font-medium text-lg">
+                <button onClick={() => { queryClient.invalidateQueries({ queryKey: ['assignedOrdersToReturn'] }), navigate('/rider/return'), localStorage.removeItem('newReturnNotif'), setNewReturnNotif(0) }} className="text-nowrap border-b border-gray-200 w-full flex justify-between py-3 pl-4 font-medium text-lg">
                     Return
                     <i className={`ml-1 ${newReturnNotif > 0 ? "bg-red-500 text-white flex justify-center items-center w-5 h-5 rounded-[50%]!" : null}`}>{newReturnNotif > 0 ? newReturnNotif : null}</i>
                 </button>
@@ -148,14 +148,23 @@ export default function RiderNavbar() {
                         <p className="m-0">Menu</p>
                         <i onClick={() => setToggle(!toggle)} className="fa-solid fa-x pr-5"></i>
                     </div>
-                    <button onClick={() => navigate('/rider')} className="border-b border-gray-200 w-full flex justify-between py-3 pl-4 font-medium text-lg">Dashboard</button>
-                    <button onClick={() => navigate('/rider/assigned-orders')} className="border-b border-gray-200 w-full flex justify-between py-3 pl-4 font-medium text-lg">Pickup</button>
-                    <button onClick={() => navigate('/rider/scan-orders')} className="border-b border-gray-200 w-full flex justify-between py-3 pl-4 font-medium text-lg">Scan for Pickup</button>
+                    <button onClick={() => { navigate('/rider'), setToggle(!toggle) }} className="border-b border-gray-200 w-full flex justify-between py-3 pl-4 font-medium text-lg">Dashboard</button>
+                    <button onClick={() => { queryClient.invalidateQueries({ queryKey: ['assignedOrdersToPick'] }), navigate('/rider/assigned-orders'), localStorage.removeItem('newPickupNotif'), setNewPickupNotif(0), setToggle(!toggle) }} className="border-b border-gray-200 w-full flex justify-between py-3 pl-4 font-medium text-lg">
+                        Pickup
+                        <i className={`ml-1 ${newPickupNotif > 0 ? "bg-red-500 text-white flex justify-center items-center w-5 h-5 rounded-[50%]!" : null}`}>{newPickupNotif > 0 ? newPickupNotif : null}</i>
+                    </button>
+                    <button onClick={() => { navigate('/rider/scan-orders'), setToggle(!toggle) }} className="border-b border-gray-200 w-full flex justify-between py-3 pl-4 font-medium text-lg">Scan for Pickup</button>
 
-                    <button onClick={() => navigate('/rider/delivery')} className="border-b border-gray-200 w-full flex justify-between py-3 pl-4 font-medium text-lg">Delivery</button>
-                    <button onClick={() => navigate('/rider/return')} className="border-b border-gray-200 w-full flex justify-between py-3 pl-4 font-medium text-lg">Return</button>
+                    <button onClick={() => { queryClient.invalidateQueries({ queryKey: ['assignedOrdersToDeliver'] }), navigate('/rider/delivery'), localStorage.removeItem('newDeliveryNotif'), setNewDeliveryNotif(0), setToggle(!toggle) }} className="border-b border-gray-200 w-full flex justify-between py-3 pl-4 font-medium text-lg">
+                        Delivery
+                        <i className={`ml-1 ${newDeliveryNotif > 0 ? "bg-red-500 text-white flex justify-center items-center w-5 h-5 rounded-[50%]!" : null}`}>{newDeliveryNotif > 0 ? newDeliveryNotif : null}</i>
+                    </button>
+                    <button onClick={() => { queryClient.invalidateQueries({ queryKey: ['assignedOrdersToReturn'] }), navigate('/rider/return'), localStorage.removeItem('newReturnNotif'), setNewReturnNotif(0), setToggle(!toggle) }} className="border-b border-gray-200 w-full flex justify-between py-3 pl-4 font-medium text-lg">
+                        Return
+                        <i className={`ml-1 ${newReturnNotif > 0 ? "bg-red-500 text-white flex justify-center items-center w-5 h-5 rounded-[50%]!" : null}`}>{newReturnNotif > 0 ? newReturnNotif : null}</i>
+                    </button>
 
-                    <button onClick={() => navigate('/rider/orders-with-rider')} className="border-b border-gray-200 w-full flex justify-between py-3 pl-4 font-medium text-lg">Orders With Rider</button>
+                    <button onClick={() => { navigate('/rider/orders-with-rider'), setToggle(!toggle) }} className="border-b border-gray-200 w-full flex justify-between py-3 pl-4 font-medium text-lg">Orders With Rider</button>
                     <button onClick={() => { localStorage.removeItem("token"), window.location.reload() }} className="text-red-400 font-bold border-b border-gray-200 w-full flex justify-between py-3 pl-4 text-lg">Logout</button>
                 </div>
                 {

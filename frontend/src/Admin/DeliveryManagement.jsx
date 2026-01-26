@@ -56,7 +56,7 @@ export default function DeliveryManagement() {
             navigate('/');
             return;
         }
-        const data = await fetch('http://localhost:3000/riders/', {
+        const data = await fetch('http://localhost:3000/riders/riders-active', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -217,7 +217,7 @@ export default function DeliveryManagement() {
                                     {/* <td className="p-4 text-center text-nowrap font-semibold">Order Amount</td> */}
                                     {/* <td className="p-4 text-center text-nowrap font-semibold">Delivery Address </td> */}
                                     <td className="p-4 text-center text-nowrap font-semibold">Status</td>
-                                    {/* <td className="p-4 text-center text-nowrap font-semibold">Items </td> */}
+                                    {/* <td className="p-4 text-center text-nowrap font-semibold">Dimensions </td> */}
                                     <td className="p-4 text-center text-nowrap font-semibold">Assign </td>
                                 </tr>
                             </thead>
@@ -232,13 +232,13 @@ export default function DeliveryManagement() {
                                                 {/* <td className="p-4 text-center text-nowrap">{a?.trackingId}</td> */}
                                                 <td className="p-4 text-center text-nowrap">{a?.OrderDate}</td>
                                                 {/* <td className="p-4 text-center text-nowrap">{a?.CustomerContactNo}</td> */}
-                                                <td className="p-4 text-center text-nowrap">{a?.PickupAddress}</td>
+                                                <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.PickupAddress}</td>
 
                                                 {/* <td className="p-4 text-center text-nowrap">{a?.OrderType}</td> */}
                                                 {/* <td className="p-4 text-center text-nowrap">{a?.OrderAmount}</td> */}
-                                                {/* <td className="p-4 text-center text-nowrap">{a?.DeliveryAddress}</td> */}
+                                                {/* <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.DeliveryAddress}</td> */}
                                                 <td className="p-4 text-center text-nowrap">{a?.status}</td>
-                                                {/* <td className="p-4 text-center text-nowrap">{a?.Items}</td> */}
+                                                {/* <td className="p-4 text-center text-nowrap">{a?.Dimensions}</td> */}
 
                                                 <td className="p-4 text-center">
                                                     <button onClick={() => setOpenMenuAssignRider(a?._id)} className='bg-[#d10115] text-white rounded p-2'>Assign</button>

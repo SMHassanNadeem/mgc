@@ -1,3 +1,4 @@
+import logo from '../assets/MGC.png';
 import { useEffect } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom"
@@ -100,38 +101,70 @@ export default function Accounts() {
         return rider ? rider.ridersName || "Unknown Rider" : "Rider Not Found";
     }
 
-    const generatePDF = () => {
+    const loadImage = (url) =>
+        new Promise((resolve) => {
+            const img = new Image();
+            img.src = url;
+            img.onload = () => resolve(img);
+        });
+    const generatePDF = async () => {
         try {
             // Create new PDF
             const pdf = new jsPDF('p', 'mm', 'a4');
 
             // Set margins
-            const margin = 10;
-            const pageWidth = 210;
+            const margin = 5;
+            const pageWidth = 250;
             const pageHeight = 297;
-            const contentWidth = 200; // Fixed width for table
+            const contentWidth = 190; // Fixed width for table
             let yPosition = margin;
 
             // Add rider info
             // const rider = ridersData?.[0];
 
             // Title
-            pdf.setFontSize(20);
-            pdf.text('INVOICE REPORT', pageWidth / 2, yPosition, { align: 'center' });
+            yPosition += 10;
+
+            const img = await loadImage(logo);
+
+            // Sizes
+            const headingFontSize = 20;
+            const logoHeight = 25;
+            const logoWidth = 70;
+            pdf.setFontSize(headingFontSize);
+            const text = 'Due Amount On Rider';
+            const textWidth = pdf.getTextWidth(text);
+            const gap = 3;
+            const totalWidth = logoWidth + gap + textWidth;
+            const startX = ((pdf.internal.pageSize.getWidth() - totalWidth) / 2) - 40;
+            pdf.addImage(
+                img,
+                'PNG',
+                startX,
+                yPosition - logoHeight + 15, // vertical alignment tweak
+                logoWidth,
+                logoHeight
+            );
+            pdf.text(
+                text,
+                (pageWidth / 2),
+                yPosition
+                , { align: 'center' }
+            );
             yPosition += 10;
 
             pdf.setFontSize(12);
-            pdf.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth / 2, yPosition, { align: 'center' });
+            pdf.text(`Generated: ${new Date().toLocaleDateString()}`, (pageWidth / 2), yPosition, { align: 'center' });
             yPosition += 15;
 
             // Rider Info Table - NO WRAPPING
             pdf.setFontSize(14);
-            pdf.text('Vendor Information', margin, yPosition);
+            pdf.text('Sender Info:', margin, yPosition);
             yPosition += 10;
 
             pdf.setFontSize(10);
             const DataRows = [
-                ['Vendor Name:', filteredData?.creatorName && filteredData?.creatorName.length > 0 ? 'Different-Vendors' : filteredData[0]?.creatorName || 'N/A'],
+                ['Sender Name:', filteredData?.creatorName && filteredData?.creatorName.length > 0 ? 'Different-Senders' : filteredData[0]?.creatorName || 'N/A'],
                 // ['CNIC:', filteredData?.Cnic || 'N/A'],
                 // ['Contact No:', filteredData?.PhoneNo || 'N/A'],
                 // ['Email:', filteredData?.Email || 0],
@@ -179,7 +212,9 @@ export default function Accounts() {
                 pdf.setFontSize(8); // Smaller font for table
 
                 // Table headers
-                const headers = ['Vendor', 'Receiver', 'Delivery Address', 'Order Date', 'Amount', 'Status'];
+                // const headers = ['Vendor', 'Receiver', 'Delivery Address', 'Order Date', 'Amount', 'Status'];
+                const headers = ['Vendor', 'Receiver', 'Order Date', 'Amount', 'Status'];
+
                 let xPosition = margin;
                 const colWidth = contentWidth / headers.length; // Equal column width
 
@@ -208,7 +243,7 @@ export default function Accounts() {
                     const row = [
                         order?.creatorName || 'N/A',
                         order?.CustomerName || 'N/A',
-                        order?.DeliveryAddress || 'N/A',
+                        // order?.DeliveryAddress || 'N/A',
                         order?.OrderDate ? new Date(order.OrderDate).toLocaleDateString() : 'N/A',
                         order?.OrderAmount || '0',
                         order?.status || 'N/A'
@@ -254,7 +289,7 @@ export default function Accounts() {
                 const totalAmount = filteredData.reduce((sum, order) => sum + (parseFloat(order?.OrderAmount) || 0), 0);
                 pdf.setFontSize(10);
                 pdf.text(`Total Amount: ${totalAmount.toFixed(2)}`, margin, yPosition);
-                pdf.text(`Total Orders: ${filteredData.length}`, pageWidth - margin - 30, yPosition, { align: 'right' });
+                pdf.text(`Total Orders: ${filteredData.length}`, pageWidth - margin - 60, yPosition, { align: 'right' });
             } else {
                 // No orders message
                 pdf.setFontSize(12);
@@ -262,7 +297,7 @@ export default function Accounts() {
             }
 
             // Save PDF
-            pdf.save(`Report_${filteredData?.creatorName && filteredData?.creatorName.length > 0 ? 'Different-Vendors' : filteredData[0]?.creatorName}_${new Date().getTime()}.pdf`);
+            pdf.save(`Report_${filteredData?.creatorName && filteredData?.creatorName.length > 0 ? 'Different-Senders' : filteredData[0]?.creatorName}_${new Date().getTime()}.pdf`);
 
         } catch (error) {
             console.error('PDF generation error:', error);
@@ -311,38 +346,64 @@ export default function Accounts() {
 
 
 
-    const generatePDFReturnToVendor = () => {
+    const generatePDFReturnToVendor = async () => {
         try {
             // Create new PDF
             const pdf = new jsPDF('p', 'mm', 'a4');
 
             // Set margins
-            const margin = 10;
-            const pageWidth = 210;
+            const margin = 5;
+            const pageWidth = 250;
             const pageHeight = 297;
-            const contentWidth = 200; // Fixed width for table
+            const contentWidth = 190; // Fixed width for table
             let yPosition = margin;
 
             // Add rider info
             // const rider = ridersData?.[0];
 
             // Title
-            pdf.setFontSize(20);
-            pdf.text('ACCOUNTS REPORT', pageWidth / 2, yPosition, { align: 'center' });
+            yPosition += 10;
+
+            const img = await loadImage(logo);
+
+            // Sizes
+            const headingFontSize = 20;
+            const logoHeight = 25;
+            const logoWidth = 70;
+            pdf.setFontSize(headingFontSize);
+            const text = 'Amount Due On Us';
+            const textWidth = pdf.getTextWidth(text);
+            const gap = 3;
+            const totalWidth = logoWidth + gap + textWidth;
+            const startX = ((pdf.internal.pageSize.getWidth() - totalWidth) / 2) - 40;
+            pdf.addImage(
+                img,
+                'PNG',
+                startX,
+                yPosition - logoHeight + 15, // vertical alignment tweak
+                logoWidth,
+                logoHeight
+            );
+            pdf.text(
+                text,
+                (pageWidth / 2),
+                yPosition
+                , { align: 'center' }
+            );
             yPosition += 10;
 
             pdf.setFontSize(12);
-            pdf.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth / 2, yPosition, { align: 'center' });
+            pdf.text(`Generated: ${new Date().toLocaleDateString()}`, (pageWidth / 2), yPosition, { align: 'center' });
             yPosition += 15;
 
             // Rider Info Table - NO WRAPPING
             pdf.setFontSize(14);
-            pdf.text('Vendor Information', margin, yPosition);
+            pdf.text('Sender Info:', margin, yPosition);
             yPosition += 10;
 
             pdf.setFontSize(10);
             const DataRows = [
-                ['Vendor Name:', filteredDataReturnToVendor?.creatorName && filteredDataReturnToVendor?.creatorName.length > 0 ? 'Different-Vendors' : filteredDataReturnToVendor[0]?.creatorName || 'N/A'],
+                ['Sender Name:', filteredDataReturnToVendor?.creatorName && filteredDataReturnToVendor?.creatorName.length > 0 ? 'Different-Senders' : filteredDataReturnToVendor[0]?.creatorName || 'N/A'],
                 // ['CNIC:', filteredData?.Cnic || 'N/A'],
                 // ['Contact No:', filteredData?.PhoneNo || 'N/A'],
                 // ['Email:', filteredData?.Email || 0],
@@ -390,7 +451,8 @@ export default function Accounts() {
                 pdf.setFontSize(8); // Smaller font for table
 
                 // Table headers
-                const headers = ['Vendor', 'Receiver', 'Delivery Address', 'Order Date', 'Amount', 'Status'];
+                // const headers = ['Vendor', 'Receiver', 'Delivery Address', 'Order Date', 'Amount', 'Status'];
+                const headers = ['Vendor', 'Receiver', 'Order Date', 'Amount', 'Status'];
                 let xPosition = margin;
                 const colWidth = contentWidth / headers.length; // Equal column width
 
@@ -419,7 +481,7 @@ export default function Accounts() {
                     const row = [
                         order?.creatorName || 'N/A',
                         order?.CustomerName || 'N/A',
-                        order?.DeliveryAddress || 'N/A',
+                        // order?.DeliveryAddress || 'N/A',
                         order?.OrderDate ? new Date(order.OrderDate).toLocaleDateString() : 'N/A',
                         order?.OrderAmount || '0',
                         order?.status || 'N/A'
@@ -465,7 +527,7 @@ export default function Accounts() {
                 const totalAmount = filteredDataReturnToVendor.reduce((sum, order) => sum + (parseFloat(order?.OrderAmount) || 0), 0);
                 pdf.setFontSize(10);
                 pdf.text(`Total Amount: ${totalAmount.toFixed(2)}`, margin, yPosition);
-                pdf.text(`Total Orders: ${filteredDataReturnToVendor.length}`, pageWidth - margin - 30, yPosition, { align: 'right' });
+                pdf.text(`Total Orders: ${filteredDataReturnToVendor.length}`, pageWidth - margin - 60, yPosition, { align: 'right' });
             } else {
                 // No orders message
                 pdf.setFontSize(12);
@@ -473,7 +535,7 @@ export default function Accounts() {
             }
 
             // Save PDF
-            pdf.save(`Report_${filteredDataReturnToVendor?.creatorName && filteredDataReturnToVendor?.creatorName.length > 0 ? 'Different-Vendors' : filteredDataReturnToVendor[0]?.creatorName}_${new Date().getTime()}.pdf`);
+            pdf.save(`Report_${filteredDataReturnToVendor?.creatorName && filteredDataReturnToVendor?.creatorName.length > 0 ? 'Different-Senders' : filteredDataReturnToVendor[0]?.creatorName}_${new Date().getTime()}.pdf`);
 
         } catch (error) {
             console.error('PDF generation error:', error);
@@ -522,7 +584,7 @@ export default function Accounts() {
     const [page, setPage] = useState(1)
 
 
-    async function updateAccStatusLogic(orderId) {
+    async function updateAccStatusLogic({orderId,status}) {
         const token = localStorage.getItem('token');
         if (!token) {
             navigate('/');
@@ -535,7 +597,7 @@ export default function Accounts() {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
             },
             body: JSON.stringify({
-                accountsStatus: "Amount - Picked From Rider",
+                accountsStatus: status,
             })
         })
         if (data?.status === 401) {
@@ -558,7 +620,7 @@ export default function Accounts() {
         },
         onError: (error) => {
             console.error('Error assigning rider:', error);
-            toast.success(`Failed : ${error.message}`, {
+            toast.error(`Failed : ${error.message}`, {
                 position: "top-right",
                 autoClose: 3000,
                 style: {
@@ -568,8 +630,8 @@ export default function Accounts() {
             })
         }
     })
-    function updateAccStatusFun(orderId) {
-        updateAccStatusMutation.mutate(orderId);
+    function updateAccStatusFun(orderId, status) {
+        updateAccStatusMutation.mutate({ orderId, status });
     }
 
     return (
@@ -625,7 +687,7 @@ export default function Accounts() {
                                     </thead>
                                     <tbody>
                                         {
-                                            filteredData?.filter(a => a?.accountsStatus !== "Amount - Picked From Rider")?.map((a) => (
+                                            filteredData?.filter(a => a?.accountsStatus !== "Amount - Picked From Rider" && a?.accountsStatus !== "Amount - Delivered")?.map((a) => (
                                                 <tr>
                                                     <td className="p-4 text-center text-nowrap">{getRiderNameById(a?.ridersIdForDelivery)}</td>
                                                     <td className="p-4 text-center text-nowrap">{a?.OrderAmount} Rs</td>
@@ -634,7 +696,7 @@ export default function Accounts() {
                                                     <td className="p-4 text-center text-nowrap">{a?.trackingId}</td>
                                                     <td className="p-4 text-center text-nowrap">
                                                         <button
-                                                            onClick={() => updateAccStatusFun(a?._id)}
+                                                            onClick={() => updateAccStatusFun(a?._id, 'Amount - Picked From Rider')}
                                                             className="bg-red-500 text-white rounded p-2"
                                                         >
                                                             Confirm
@@ -672,11 +734,12 @@ export default function Accounts() {
                                 <table className="bg-white border w-full rounded-lg shadow-md">
                                     <thead className="text-white bg-[#041026]">
                                         <tr>
+                                            <td className="p-4 text-center text-nowrap font-semibold">Sender Name </td>
                                             <td className="p-4 text-center text-nowrap font-semibold">Rider Delivered</td>
                                             <td className="p-4 text-center text-nowrap font-semibold">Order Amount</td>
-                                            <td className="p-4 text-center text-nowrap font-semibold">Sender Name </td>
                                             <td className="p-4 text-center text-nowrap font-semibold">Receiver Name </td>
                                             <td className="p-4 text-center text-nowrap font-semibold">Order tracking Id </td>
+                                            <td className="p-4 text-center text-nowrap font-semibold">Confirm Delivered </td>
                                             {/* <td className="p-4 text-center text-nowrap font-semibold">Confirm Received </td> */}
                                         </tr>
                                     </thead>
@@ -684,19 +747,19 @@ export default function Accounts() {
                                         {
                                             filteredDataReturnToVendor?.filter(a => a?.accountsStatus === "Amount - Picked From Rider")?.map((a) => (
                                                 <tr>
+                                                    <td className="p-4 text-center text-nowrap">{a?.creatorName}</td>
                                                     <td className="p-4 text-center text-nowrap">{getRiderNameById(a?.ridersIdForDelivery)}</td>
                                                     <td className="p-4 text-center text-nowrap">{a?.OrderAmount} Rs</td>
-                                                    <td className="p-4 text-center text-nowrap">{a?.creatorName}</td>
                                                     <td className="p-4 text-center text-nowrap">{a?.CustomerName}</td>
                                                     <td className="p-4 text-center text-nowrap">{a?.trackingId}</td>
-                                                    {/* <td className="p-4 text-center text-nowrap">
-                                                    <button
-                                                        onClick={() => updateAccStatusFun(a?._id)}
-                                                        className="bg-red-500 text-white rounded p-2"
-                                                    >
-                                                        Confirm
-                                                    </button>
-                                                </td> */}
+                                                    <td className="p-4 text-center text-nowrap">
+                                                        <button
+                                                            onClick={() => updateAccStatusFun(a?._id, 'Amount - Delivered')}
+                                                            className="bg-blue-500 text-white rounded p-2"
+                                                        >
+                                                            Confirm
+                                                        </button>
+                                                    </td>
                                                 </tr>
                                             ))
                                         }

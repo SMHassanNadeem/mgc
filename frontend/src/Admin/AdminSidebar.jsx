@@ -31,7 +31,7 @@ export default function AdminSidebar() {
       navigate('/');
       return;
     }
-    
+
     // Create socket connection
     const newSocket = io('http://localhost:3000', {
       transports: ['websocket', 'polling'],
@@ -81,17 +81,18 @@ export default function AdminSidebar() {
   const menuItems = [
     { path: "/admin", label: "Admin Stats", iconClass: "fas fa-tachometer-alt" },
     { path: "/admin/riders", label: "Riders", iconClass: "fas fa-motorcycle" },
+    { path: "/admin/deleted-riders", label: "Deleted Riders", iconClass: "fa-solid fa-trash" },
     { path: "/admin/vendors-management", label: "Vendors Mangament", iconClass: "fa-solid fa-truck" },
-    { path: "/admin/unapproved-users", label: "Unapproved Users", iconClass: "fas fa-user-xmark", notifName: "newUserNotif", notif: newUserNotif },
+    { path: "/admin/unapproved-users", label: "Unapproved Users", iconClass: "fas fa-user-xmark", notifName: "newUserNotif", notif: newUserNotif, queryKey: "unapprovedUsers" },
     { path: "/admin/users", label: "Users", iconClass: "fas fa-users" },
-    { path: "/admin/unassigned-orders", label: "Assign For Pickup", iconClass: "fas fa-box-open", notifName: "AssignPickNotif", notif: AssignPickNotif },
-    { path: "/admin/vandor-cancelled", label: "Vendor Cancelled", iconClass: "fas fa-cancel" },
+    { path: "/admin/unassigned-orders", label: "Assign For Pickup", iconClass: "fas fa-box-open", notifName: "AssignPickNotif", notif: AssignPickNotif, queryKey: "unassignedOrders" },
+    // { path: "/admin/vandor-cancelled", label: "Cancelled from pickup", iconClass: "fas fa-cancel" },
     { path: "/admin/orders", label: "Orders", iconClass: "fas fa-clipboard-list" },
     { path: "/admin/warehouse-scanner", label: "Warehouse Scanner", iconClass: "fas fa-warehouse" },
     { path: "/admin/order-at-warehouse", label: "Orders at Warehouse", iconClass: "fas fa-boxes" },
     { path: "/admin/return-management", label: "Delivery Management", iconClass: "fas fa-undo-alt" },
     { path: "/admin/cancel-management", label: "Cancel Management", iconClass: "fas fa-x" },
-    { path: "/admin/invoice-report", label: "Invoice Reports", iconClass: "fas fa-file-invoice" },
+    // { path: "/admin/invoice-report", label: "Invoice Reports", iconClass: "fas fa-file-invoice" },
     { path: "/admin/accounts", label: "Accounts", iconClass: "fa-solid fa-book" },
   ];
 
@@ -109,7 +110,12 @@ export default function AdminSidebar() {
           <>
             <button
               key={item.path}
-              onClick={() => { navigate(item.path); localStorage.removeItem(`${item?.notifName}`); clearNotification(item?.notifName) }}
+              onClick={() => {
+                navigate(item.path);
+                localStorage.removeItem(`${item?.notifName}`);
+                clearNotification(item?.notifName);
+                item?.queryKey ? queryClient.invalidateQueries({ queryKey: [`${item?.queryKey}`] }) : null;
+              }}
               className={`text-justify flex items-center w-[90%] hover:bg-gray-100 py-2 rounded pl-6 gap-3 transition-all 
               ${isActive ? "bg-gray-100 border-l-4 border-[#041026] text-[#041026]" : "hover:bg-gray-100 text-gray-600"}`}
             >

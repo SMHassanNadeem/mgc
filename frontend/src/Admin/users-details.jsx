@@ -1,46 +1,57 @@
+import logo from '../assets/MGC.png';
 import { useEffect } from "react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom"
 import { jsPDF } from 'jspdf';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+import { Global } from "../global";
+import { useContext } from 'react';
+import EditUser from '../Auth/edit-user';
 
 export default function UsersDetail() {
-    const { uid } = useParams()
-    const [userData, setUserData] = useState()
-    const navigate = useNavigate()
-    useEffect(() => {
-        async function a() {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                navigate('/');
-                return;
-            }
 
-            const data = await fetch(`http://localhost:3000/users/${uid}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                },
-            })
-            if (data?.status === 401) {
-                localStorage.removeItem('token');
-                navigate('/');
-                return;
-            }
-            if (data?.status === 403) {
-                // Not authorized (not admin)
-                navigate('/');
-                return;
-            }
-            if (!data?.ok) {
-                throw new Error(`HTTP error! status: ${data.status}`);
-            }
-            const info = await data.json()
-            setUserData([info?.user])
-            // console.log(info)
+    const { openMenuAddUser, setOpenMenuAddUser } = useContext(Global)
+
+    const queryClient = useQueryClient()
+    const { uid } = useParams()
+    const navigate = useNavigate()
+    async function usersLogic() {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate('/');
+            return;
         }
-        a();
-    }, [])
+
+        const data = await fetch(`http://localhost:3000/users/${uid}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+        })
+        if (data?.status === 401) {
+            localStorage.removeItem('token');
+            navigate('/');
+            return;
+        }
+        if (data?.status === 403) {
+            // Not authorized (not admin)
+            navigate('/');
+            return;
+        }
+        if (!data?.ok) {
+            throw new Error(`HTTP error! status: ${data.status}`);
+        }
+        const info = await data.json()
+        return [info?.user];
+    }
+    const { data: userData, isLoading: dataLoading, error: dataError, isFetching } = useQuery({
+        queryKey: ['userData'],
+        queryFn: usersLogic,
+        retry: 1,
+        refetchOnWindowFocus: false,
+    })
 
 
     const [ordersData, setOrdersData] = useState()
@@ -109,28 +120,60 @@ export default function UsersDetail() {
     })
 
 
-    const generatePDF = () => {
+    const loadImage = (url) =>
+        new Promise((resolve) => {
+            const img = new Image();
+            img.src = url;
+            img.onload = () => resolve(img);
+        });
+    const generatePDF = async () => {
         try {
             // Create new PDF
             const pdf = new jsPDF('p', 'mm', 'a4');
 
             // Set margins
-            const margin = 20;
-            const pageWidth = 210;
+            const margin = 5;
+            const pageWidth = 250;
             const pageHeight = 297;
-            const contentWidth = pageWidth - (margin * 2);
+            const contentWidth = 190;
             let yPosition = margin;
 
             // Add user info
             const user = userData?.[0];
 
             // Title
-            pdf.setFontSize(20);
-            pdf.text('USER PROFILE REPORT', pageWidth / 2, yPosition, { align: 'center' });
+            yPosition += 10;
+
+            const img = await loadImage(logo);
+
+            // Sizes
+            const headingFontSize = 20;
+            const logoHeight = 25;
+            const logoWidth = 70;
+            pdf.setFontSize(headingFontSize);
+            const text = 'User Report';
+            const textWidth = pdf.getTextWidth(text);
+            const gap = 3;
+            const totalWidth = logoWidth + gap + textWidth;
+            const startX = ((pdf.internal.pageSize.getWidth() - totalWidth) / 2) - 40;
+            pdf.addImage(
+                img,
+                'PNG',
+                startX,
+                yPosition - logoHeight + 15, // vertical alignment tweak
+                logoWidth,
+                logoHeight
+            );
+            pdf.text(
+                text,
+                (pageWidth / 2),
+                yPosition
+                , { align: 'center' }
+            );
             yPosition += 10;
 
             pdf.setFontSize(12);
-            pdf.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth / 2, yPosition, { align: 'center' });
+            pdf.text(`Generated: ${new Date().toLocaleDateString()}`, (pageWidth / 2), yPosition, { align: 'center' });
             yPosition += 15;
 
             // User Info Table
@@ -140,7 +183,7 @@ export default function UsersDetail() {
 
             pdf.setFontSize(10);
             const userDataRows = [
-                ['Vendor Name:', user?.CompanyName || 'N/A'],
+                ['sender Name:', user?.CompanyName || 'N/A'],
                 ['CNIC:', user?.Cnic || 'N/A'],
                 ['Contact No:', user?.PhoneNo || 'N/A'],
                 ['Total Orders:', ordersData?.length || 0],
@@ -168,7 +211,7 @@ export default function UsersDetail() {
                 pdf.setFontSize(8); // Smaller font for table
 
                 // Table headers
-                const headers = ['Receiver', 'Delivery Address', 'Order Date', 'Amount', 'Status'];
+                const headers = ['Sender', 'Receiver', 'Order Date', 'Amount', 'Status'];
                 let xPosition = margin;
                 const colWidth = contentWidth / headers.length;
 
@@ -192,10 +235,11 @@ export default function UsersDetail() {
                     }
 
                     const row = [
+                        order?.creatorName || 'N/A',
                         order?.CustomerName || 'N/A',
-                        order?.DeliveryAddress || 'N/A',
+                        // order?.DeliveryAddress || 'N/A',
                         new Date(order?.OrderDate).toLocaleDateString(),
-                        order?.OrderAmount || '0',
+                        order?.OrderAmount + ' ' + 'Rs' || '0 Rs',
                         order?.status || 'N/A'
                     ];
 
@@ -237,7 +281,7 @@ export default function UsersDetail() {
                 const totalAmount = filteredOrders.reduce((sum, order) => sum + (parseFloat(order?.OrderAmount) || 0), 0);
                 pdf.setFontSize(10);
                 pdf.text(`Total Amount: ${totalAmount.toFixed(2)}`, margin, yPosition);
-                pdf.text(`Total Orders: ${filteredOrders.length}`, pageWidth - margin - 30, yPosition, { align: 'right' });
+                pdf.text(`Total Orders: ${filteredOrders.length}`, pageWidth - margin - 60, yPosition, { align: 'right' });
             }
 
             // Save PDF
@@ -250,6 +294,61 @@ export default function UsersDetail() {
     };
 
 
+    async function blockUserLogic({ id, status }) {
+        try {
+            const response = await fetch(`http://localhost:3000/users/${id}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({
+                    status: status,
+                })
+            });
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to update order status');
+            }
+            // toast.success("Order Confirmed Successfully!", {
+            //     position: "top-right",
+            //     autoClose: 3000,
+            // })
+        } catch (error) {
+            console.error('Error confirming order:', error);
+            // toast.error(`Failed to confirm order: ${error.message}`, {
+            //     position: "top-right",
+            //     autoClose: 3000,
+            //     style: {
+            //         background: '#d10115',
+            //         color: 'white',
+            //     },
+            // })
+        }
+    }
+    const blockUserMutation = useMutation({
+        mutationFn: blockUserLogic,
+        onSuccess: (data, variables) => {
+            console.log(data)
+            queryClient.invalidateQueries({ queryKey: ['userData'] });
+        },
+        onError: (error) => {
+            console.error('Error assigning rider:', error);
+            // toast.error(`Failed to confirm: ${error.message}`, {
+            //     position: "top-right",
+            //     autoClose: 3000,
+            //     style: {
+            //         background: '#d10115',
+            //         color: 'white',
+            //     },
+            // })
+        }
+    })
+    function blockUserFun(id, status) {
+        blockUserMutation.mutate({ id, status })
+    }
+    const isBlocking = blockUserMutation.isPending;
+
     return (
         <>
             {
@@ -257,7 +356,7 @@ export default function UsersDetail() {
                     <>
                         <div className="overflow-y-scroll bg-gray-100 flex flex-col gap-4 p-4 justify-start items-start w-7/8! sm:w-3/4 h-screen">
                             <div className="w-full flex gap-2">
-                                <div className="flex-1 rounded-lg p-4 text-white bg-linear-to-r from-blue-600 to-blue-800">
+                                <div className="flex-1 rounded-lg p-4 text-white bg-linear-to-r from-gray-600 to-gray-800">
                                     <div>
                                         <h4>Sender Name :</h4>
                                         <h5>{a?.CompanyName}</h5>
@@ -272,10 +371,23 @@ export default function UsersDetail() {
                                     </div>
                                     <div>
                                         <h4>No of Orders :</h4>
-                                        <h5>{a?.orders.length}</h5>
+                                        <h5>{filteredOrders?.length}</h5>
+                                    </div>
+                                    <div>
+                                        <button disabled={isBlocking} style={{ backgroundColor: a?.status !== "Blocked" ? "red" : "blue" }} className='bg-red-700 rounded p-2' onClick={() => {
+                                            a?.status === "Blocked" ? blockUserFun(a?._id, 'approved') : blockUserFun(a?._id, 'Blocked')
+                                        }}>
+                                            {
+                                                (isBlocking || isFetching) ? 'Blocking..' : a?.status === "Blocked" ? "UNBLOCK" : "BLOCK"
+                                            }
+                                        </button>
+                                        <button disabled={isBlocking} style={{ backgroundColor: "blue" }} className='ml-2! bg-red-700 rounded p-2' onClick={() => setOpenMenuAddUser(true)}>
+                                            Update
+                                        </button>
+                                        <EditUser vendorId={a?._id} openMenuAddUser={openMenuAddUser} setOpenMenuAddUser={setOpenMenuAddUser} />
                                     </div>
                                 </div>
-                                <div className="flex-1 rounded-lg p-4 text-white bg-linear-to-r from-blue-700 to-blue-900">
+                                <div className="flex-1 rounded-lg p-4 text-white bg-linear-to-r from-gray-700 to-gray-900">
                                     <div>
                                         <h4>Bank Name :</h4>
                                         <h5>{a?.BankName}</h5>
@@ -325,7 +437,7 @@ export default function UsersDetail() {
                                                 <td className="p-4 text-center text-nowrap font-semibold">Order Amount</td>
                                                 <td className="p-4 text-center text-nowrap font-semibold">Delivery Address </td>
                                                 <td className="p-4 text-center text-nowrap font-semibold">Status</td>
-                                                <td className="p-4 text-center text-nowrap font-semibold">Items </td>
+                                                <td className="p-4 text-center text-nowrap font-semibold">Dimensions </td>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -338,13 +450,13 @@ export default function UsersDetail() {
                                                         <td className="p-4 text-center text-nowrap">{a?.trackingId}</td>
                                                         <td className="p-4 text-center text-nowrap">{a?.OrderDate}</td>
                                                         <td className="p-4 text-center text-nowrap">{a?.CustomerContactNo}</td>
-                                                        <td className="p-4 text-center text-nowrap">{a?.PickupAddress}</td>
+                                                        <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.PickupAddress}</td>
 
                                                         <td className="p-4 text-center text-nowrap">{a?.OrderType}</td>
-                                                        <td className="p-4 text-center text-nowrap">{a?.OrderAmount}</td>
-                                                        <td className="p-4 text-center text-nowrap">{a?.DeliveryAddress}</td>
+                                                        <td className="p-4 text-center text-nowrap">{a?.OrderAmount + ' ' + 'Rs'}</td>
+                                                        <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.DeliveryAddress}</td>
                                                         <td className="p-4 text-center text-nowrap">{a?.status}</td>
-                                                        <td className="p-4 text-center text-nowrap">{a?.Items}</td>
+                                                        <td className="p-4 text-center text-nowrap">{a?.Dimensions}</td>
                                                     </tr>
                                                 ))
                                             }

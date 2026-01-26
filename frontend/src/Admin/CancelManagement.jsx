@@ -60,7 +60,7 @@ export default function CancelManagement() {
             navigate('/');
             return;
         }
-        const data = await fetch('http://localhost:3000/riders/', {
+        const data = await fetch('http://localhost:3000/riders/riders-active', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -290,8 +290,9 @@ export default function CancelManagement() {
                                         {/* <td className="p-4 text-center text-nowrap font-semibold">Delivery Address </td> */}
                                         <td className="p-4 text-center text-nowrap font-semibold">Status</td>
                                         <td className="p-4 text-center text-nowrap font-semibold">Cancel Reasons</td>
-                                        {/* <td className="p-4 text-center text-nowrap font-semibold">Items </td> */}
-                                        <td className="p-4 text-center text-nowrap font-semibold">Assign </td>
+                                        {/* <td className="p-4 text-center text-nowrap font-semibold">Dimensions </td> */}
+                                        <td className="p-4 text-center text-nowrap font-semibold">ReAssign </td>
+                                        <td className="p-4 text-center text-nowrap font-semibold">Assign To Return</td>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -305,17 +306,17 @@ export default function CancelManagement() {
                                                     {/* <td className="p-4 text-center text-nowrap">{a?.trackingId}</td> */}
                                                     <td className="p-4 text-center text-nowrap">{a?.OrderDate}</td>
                                                     {/* <td className="p-4 text-center text-nowrap">{a?.CustomerContactNo}</td> */}
-                                                    <td className="p-4 text-center text-nowrap">{a?.PickupAddress}</td>
+                                                    <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.PickupAddress}</td>
 
                                                     {/* <td className="p-4 text-center text-nowrap">{a?.OrderType}</td> */}
                                                     {/* <td className="p-4 text-center text-nowrap">{a?.OrderAmount}</td> */}
-                                                    {/* <td className="p-4 text-center text-nowrap">{a?.DeliveryAddress}</td> */}
+                                                    {/* <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.DeliveryAddress}</td> */}
                                                     <td className="p-4 text-center text-nowrap">{a?.status}</td>
-                                                    <td className="p-4 text-center text-nowrap">{a?.cancelReasons}</td>
-                                                    {/* <td className="p-4 text-center text-nowrap">{a?.Items}</td> */}
+                                                    <td className="p-4 text-center text-nowrap">{a?.cancelReasons.replace(/,+/g, ' ').trim()}</td>
+                                                    {/* <td className="p-4 text-center text-nowrap">{a?.Dimensions}</td> */}
 
                                                     <td className="p-4 text-center">
-                                                        <button onClick={() => setOpenMenuAssignRiderAgain0(a?._id)} className='bg-[#d10115] text-white rounded p-2'>Assign</button>
+                                                        <button onClick={() => setOpenMenuAssignRiderAgain0(a?._id)} className='bg-blue-400 text-white rounded p-2'>Reassign</button>
                                                     </td>
                                                     <Dialog
                                                         open={openMenuAssignRiderAgain0 === a?._id}
@@ -367,6 +368,59 @@ export default function CancelManagement() {
                                                             </div>
                                                         </DialogTitle>
                                                     </Dialog>
+                                                    <td className="p-4 text-center">
+                                                        <button onClick={() => setOpenMenuAssignRider(a?._id)} className='bg-[#d10115] text-white rounded p-2'>Assign To Return</button>
+                                                    </td>
+                                                    <Dialog
+                                                        open={openMenuAssignRider === a?._id}
+                                                        onClose={() => setOpenMenuAssignRider(false)}
+                                                        PaperProps={{
+                                                            sx: {
+                                                                width: "100%",
+                                                                maxWidth: "none",
+                                                            }
+                                                        }}
+                                                    >
+                                                        <DialogTitle
+                                                            sx={{
+                                                                paddingY: "10px",
+                                                                width: "95vw",
+                                                                display: "flex",
+                                                                flexDirection: "column",
+                                                                alignItems: 'flex-start',
+                                                                gap: "10px",
+                                                            }}
+                                                        >
+                                                            <div className="w-full h-auto overflow-scroll">
+                                                                <table className="bg-white border w-full h-auto rounded-lg shadow-md">
+                                                                    <thead className="text-white bg-[#041021]">
+                                                                        <tr>
+                                                                            <td className="p-4 text-center font-semibold">Rider Name</td>
+                                                                            <td className="p-4 text-center font-semibold">Contact No</td>
+                                                                            <td className="p-4 text-center font-semibold">Assigned Area</td>
+                                                                            <td className="p-4 text-center font-semibold">Assign</td>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody className='text-nowrap'>
+                                                                        {
+                                                                            rider?.map((b) => (
+                                                                                <tr>
+                                                                                    <td className="p-4 text-center">{b?.ridersName}</td>
+                                                                                    <td className="p-4 text-center">{b?.contactNo}</td>
+                                                                                    <td className="p-4 text-center">{b?.assignedArea}</td>
+                                                                                    <td className="p-4 text-center">
+                                                                                        <button onClick={() => assignRiderFun(a?._id, b?._id)}
+                                                                                            className='bg-[#d10115] text-white p-3 rounded'
+                                                                                        >Assign</button>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            ))
+                                                                        }
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        </DialogTitle>
+                                                    </Dialog>
                                                 </tr>
                                             ))
                                     }
@@ -403,8 +457,9 @@ export default function CancelManagement() {
                                         {/* <td className="p-4 text-center text-nowrap font-semibold">Delivery Address </td> */}
                                         <td className="p-4 text-center text-nowrap font-semibold">Status</td>
                                         <td className="p-4 text-center text-nowrap font-semibold">Cancel Reasons</td>
-                                        {/* <td className="p-4 text-center text-nowrap font-semibold">Items </td> */}
-                                        <td className="p-4 text-center text-nowrap font-semibold">Assign </td>
+                                        {/* <td className="p-4 text-center text-nowrap font-semibold">Dimensions </td> */}
+                                        <td className="p-4 text-center text-nowrap font-semibold">ReAssign </td>
+                                        <td className="p-4 text-center text-nowrap font-semibold">Assign To Return</td>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -418,17 +473,17 @@ export default function CancelManagement() {
                                                     {/* <td className="p-4 text-center text-nowrap">{a?.trackingId}</td> */}
                                                     <td className="p-4 text-center text-nowrap">{a?.OrderDate}</td>
                                                     {/* <td className="p-4 text-center text-nowrap">{a?.CustomerContactNo}</td> */}
-                                                    <td className="p-4 text-center text-nowrap">{a?.PickupAddress}</td>
+                                                    <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.PickupAddress}</td>
 
                                                     {/* <td className="p-4 text-center text-nowrap">{a?.OrderType}</td> */}
                                                     {/* <td className="p-4 text-center text-nowrap">{a?.OrderAmount}</td> */}
-                                                    {/* <td className="p-4 text-center text-nowrap">{a?.DeliveryAddress}</td> */}
+                                                    {/* <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.DeliveryAddress}</td> */}
                                                     <td className="p-4 text-center text-nowrap">{a?.status}</td>
-                                                    <td className="p-4 text-center text-nowrap">{a?.cancelReasons}</td>
-                                                    {/* <td className="p-4 text-center text-nowrap">{a?.Items}</td> */}
+                                                    <td className="p-4 text-center text-nowrap">{a?.cancelReasons.replace(/,+/g, ' ').trim()}</td>
+                                                    {/* <td className="p-4 text-center text-nowrap">{a?.Dimensions}</td> */}
 
                                                     <td className="p-4 text-center">
-                                                        <button onClick={() => setOpenMenuAssignRiderAgain1(a?._id)} className='bg-[#d10115] text-white rounded p-2'>Assign</button>
+                                                        <button onClick={() => setOpenMenuAssignRiderAgain1(a?._id)} className='bg-blue-400 text-white rounded p-2'>Reassign</button>
                                                     </td>
                                                     <Dialog
                                                         open={openMenuAssignRiderAgain1 === a?._id}
@@ -480,6 +535,59 @@ export default function CancelManagement() {
                                                             </div>
                                                         </DialogTitle>
                                                     </Dialog>
+                                                    <td className="p-4 text-center">
+                                                        <button onClick={() => setOpenMenuAssignRider(a?._id)} className='bg-[#d10115] text-white rounded p-2'>Assign To Return</button>
+                                                    </td>
+                                                    <Dialog
+                                                        open={openMenuAssignRider === a?._id}
+                                                        onClose={() => setOpenMenuAssignRider(false)}
+                                                        PaperProps={{
+                                                            sx: {
+                                                                width: "100%",
+                                                                maxWidth: "none",
+                                                            }
+                                                        }}
+                                                    >
+                                                        <DialogTitle
+                                                            sx={{
+                                                                paddingY: "10px",
+                                                                width: "95vw",
+                                                                display: "flex",
+                                                                flexDirection: "column",
+                                                                alignItems: 'flex-start',
+                                                                gap: "10px",
+                                                            }}
+                                                        >
+                                                            <div className="w-full h-auto overflow-scroll">
+                                                                <table className="bg-white border w-full h-auto rounded-lg shadow-md">
+                                                                    <thead className="text-white bg-[#041021]">
+                                                                        <tr>
+                                                                            <td className="p-4 text-center font-semibold">Rider Name</td>
+                                                                            <td className="p-4 text-center font-semibold">Contact No</td>
+                                                                            <td className="p-4 text-center font-semibold">Assigned Area</td>
+                                                                            <td className="p-4 text-center font-semibold">Assign</td>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody className='text-nowrap'>
+                                                                        {
+                                                                            rider?.map((b) => (
+                                                                                <tr>
+                                                                                    <td className="p-4 text-center">{b?.ridersName}</td>
+                                                                                    <td className="p-4 text-center">{b?.contactNo}</td>
+                                                                                    <td className="p-4 text-center">{b?.assignedArea}</td>
+                                                                                    <td className="p-4 text-center">
+                                                                                        <button onClick={() => assignRiderFun(a?._id, b?._id)}
+                                                                                            className='bg-[#d10115] text-white p-3 rounded'
+                                                                                        >Assign</button>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            ))
+                                                                        }
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        </DialogTitle>
+                                                    </Dialog>
                                                 </tr>
                                             ))
                                     }
@@ -516,8 +624,9 @@ export default function CancelManagement() {
                                         {/* <td className="p-4 text-center text-nowrap font-semibold">Delivery Address </td> */}
                                         <td className="p-4 text-center text-nowrap font-semibold">Status</td>
                                         <td className="p-4 text-center text-nowrap font-semibold">Cancel Reasons</td>
-                                        {/* <td className="p-4 text-center text-nowrap font-semibold">Items </td> */}
-                                        <td className="p-4 text-center text-nowrap font-semibold">Assign </td>
+                                        {/* <td className="p-4 text-center text-nowrap font-semibold">Dimensions </td> */}
+                                        <td className="p-4 text-center text-nowrap font-semibold">ReAssign </td>
+                                        <td className="p-4 text-center text-nowrap font-semibold">Assign To Return</td>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -531,17 +640,17 @@ export default function CancelManagement() {
                                                     {/* <td className="p-4 text-center text-nowrap">{a?.trackingId}</td> */}
                                                     <td className="p-4 text-center text-nowrap">{a?.OrderDate}</td>
                                                     {/* <td className="p-4 text-center text-nowrap">{a?.CustomerContactNo}</td> */}
-                                                    <td className="p-4 text-center text-nowrap">{a?.PickupAddress}</td>
+                                                    <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.PickupAddress}</td>
 
                                                     {/* <td className="p-4 text-center text-nowrap">{a?.OrderType}</td> */}
                                                     {/* <td className="p-4 text-center text-nowrap">{a?.OrderAmount}</td> */}
-                                                    {/* <td className="p-4 text-center text-nowrap">{a?.DeliveryAddress}</td> */}
+                                                    {/* <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.DeliveryAddress}</td> */}
                                                     <td className="p-4 text-center text-nowrap">{a?.status}</td>
-                                                    <td className="p-4 text-center text-nowrap">{a?.cancelReasons}</td>
-                                                    {/* <td className="p-4 text-center text-nowrap">{a?.Items}</td> */}
+                                                    <td className="p-4 text-center text-nowrap">{a?.cancelReasons.replace(/,+/g, ' ').trim()}</td>
+                                                    {/* <td className="p-4 text-center text-nowrap">{a?.Dimensions}</td> */}
 
                                                     <td className="p-4 text-center">
-                                                        <button onClick={() => setOpenMenuAssignRiderAgain2(a?._id)} className='bg-[#d10115] text-white rounded p-2'>Assign</button>
+                                                        <button onClick={() => setOpenMenuAssignRiderAgain2(a?._id)} className='bg-blue-400 text-white rounded p-2'>Reassign</button>
                                                     </td>
                                                     <Dialog
                                                         open={openMenuAssignRiderAgain2 === a?._id}
@@ -593,6 +702,60 @@ export default function CancelManagement() {
                                                             </div>
                                                         </DialogTitle>
                                                     </Dialog>
+
+                                                    <td className="p-4 text-center">
+                                                        <button onClick={() => setOpenMenuAssignRider(a?._id)} className='bg-[#d10115] text-white rounded p-2'>Assign To Return</button>
+                                                    </td>
+                                                    <Dialog
+                                                        open={openMenuAssignRider === a?._id}
+                                                        onClose={() => setOpenMenuAssignRider(false)}
+                                                        PaperProps={{
+                                                            sx: {
+                                                                width: "100%",
+                                                                maxWidth: "none",
+                                                            }
+                                                        }}
+                                                    >
+                                                        <DialogTitle
+                                                            sx={{
+                                                                paddingY: "10px",
+                                                                width: "95vw",
+                                                                display: "flex",
+                                                                flexDirection: "column",
+                                                                alignItems: 'flex-start',
+                                                                gap: "10px",
+                                                            }}
+                                                        >
+                                                            <div className="w-full h-auto overflow-scroll">
+                                                                <table className="bg-white border w-full h-auto rounded-lg shadow-md">
+                                                                    <thead className="text-white bg-[#041021]">
+                                                                        <tr>
+                                                                            <td className="p-4 text-center font-semibold">Rider Name</td>
+                                                                            <td className="p-4 text-center font-semibold">Contact No</td>
+                                                                            <td className="p-4 text-center font-semibold">Assigned Area</td>
+                                                                            <td className="p-4 text-center font-semibold">Assign</td>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody className='text-nowrap'>
+                                                                        {
+                                                                            rider?.map((b) => (
+                                                                                <tr>
+                                                                                    <td className="p-4 text-center">{b?.ridersName}</td>
+                                                                                    <td className="p-4 text-center">{b?.contactNo}</td>
+                                                                                    <td className="p-4 text-center">{b?.assignedArea}</td>
+                                                                                    <td className="p-4 text-center">
+                                                                                        <button onClick={() => assignRiderFun(a?._id, b?._id)}
+                                                                                            className='bg-[#d10115] text-white p-3 rounded'
+                                                                                        >Assign</button>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            ))
+                                                                        }
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        </DialogTitle>
+                                                    </Dialog>
                                                 </tr>
                                             ))
                                     }
@@ -630,8 +793,8 @@ export default function CancelManagement() {
                                         {/* <td className="p-4 text-center text-nowrap font-semibold">Delivery Address </td> */}
                                         <td className="p-4 text-center text-nowrap font-semibold">Status</td>
                                         <td className="p-4 text-center text-nowrap font-semibold">Cancel Reasons</td>
-                                        {/* <td className="p-4 text-center text-nowrap font-semibold">Items </td> */}
-                                        <td className="p-4 text-center text-nowrap font-semibold">Assign </td>
+                                        {/* <td className="p-4 text-center text-nowrap font-semibold">Dimensions </td> */}
+                                        <td className="p-4 text-center text-nowrap font-semibold">ReAssign </td>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -645,14 +808,14 @@ export default function CancelManagement() {
                                                     {/* <td className="p-4 text-center text-nowrap">{a?.trackingId}</td> */}
                                                     <td className="p-4 text-center text-nowrap">{a?.OrderDate}</td>
                                                     {/* <td className="p-4 text-center text-nowrap">{a?.CustomerContactNo}</td> */}
-                                                    <td className="p-4 text-center text-nowrap">{a?.PickupAddress}</td>
+                                                    <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.PickupAddress}</td>
 
                                                     {/* <td className="p-4 text-center text-nowrap">{a?.OrderType}</td> */}
                                                     {/* <td className="p-4 text-center text-nowrap">{a?.OrderAmount}</td> */}
-                                                    {/* <td className="p-4 text-center text-nowrap">{a?.DeliveryAddress}</td> */}
+                                                    {/* <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.DeliveryAddress}</td> */}
                                                     <td className="p-4 text-center text-nowrap">{a?.status}</td>
-                                                    <td className="p-4 text-center text-nowrap">{a?.cancelReasons}</td>
-                                                    {/* <td className="p-4 text-center text-nowrap">{a?.Items}</td> */}
+                                                    <td className="p-4 text-center text-nowrap">{a?.cancelReasons.replace(/,+/g, ' ').trim()}</td>
+                                                    {/* <td className="p-4 text-center text-nowrap">{a?.Dimensions}</td> */}
 
                                                     <td className="p-4 text-center">
                                                         <button onClick={() => setOpenMenuAssignRider(a?._id)} className='bg-[#d10115] text-white rounded p-2'>Assign</button>

@@ -108,7 +108,7 @@ export default function Orders() {
                                     <td className="p-4 text-center text-nowrap font-semibold">Order Amount</td>
                                     <td className="p-4 text-center text-nowrap font-semibold">Delivery Address </td>
                                     <td className="p-4 text-center text-nowrap font-semibold">Status</td>
-                                    <td className="p-4 text-center text-nowrap font-semibold">Items </td>
+                                    <td className="p-4 text-center text-nowrap font-semibold">Dimensions </td>
                                 </tr>
                             </thead>
                             <tbody>
@@ -120,13 +120,13 @@ export default function Orders() {
                                         <td className="p-4 text-center text-nowrap">{a?.trackingId}</td>
                                         <td className="p-4 text-center text-nowrap">{a?.OrderDate}</td>
                                         <td className="p-4 text-center text-nowrap">{a?.CustomerContactNo}</td>
-                                        <td className="p-4 text-center text-nowrap">{a?.PickupAddress}</td>
+                                        <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.PickupAddress}</td>
 
                                         <td className="p-4 text-center text-nowrap">{a?.OrderType}</td>
                                         <td className="p-4 text-center text-nowrap">{a?.OrderAmount}</td>
-                                        <td className="p-4 text-center text-nowrap">{a?.DeliveryAddress}</td>
+                                        <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.DeliveryAddress}</td>
                                         <td className="p-4 text-center text-nowrap">{a?.status}</td>
-                                        <td className="p-4 text-center text-nowrap">{a?.Items}</td>
+                                        <td className="p-4 text-center text-nowrap">{a?.Dimensions}</td>
                                     </tr>
                                 ))}
                             </tbody>

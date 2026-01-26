@@ -35,11 +35,14 @@ import Accounts from './Admin/Accounts'
 import VendorsManagement from './Admin/VendorsManagement'
 import VendorPage from './HomePage.jsx/vendor-page'
 import VendorDetails from './Admin/vendors-details'
+import FormLoader from './HomePage.jsx/loader'
+import RidersDeleted from './Admin/deleted-riders'
 
 function App() {
   return (
     <Routes>
       {/* ------------User Routes----------------------------- */}
+      <Route path='/form-loader' element={<FormLoader/>}/>
       <Route path='/' element={<Layout />}>
         <Route path='home' element={<Section1 />} />
         <Route index element={<Section1 />} />
@@ -54,6 +57,7 @@ function App() {
       <Route path='/admin' element={<AdminLayout />}>
         <Route index element={<AdminPage1 />} />
         <Route path='riders' element={<Riders/>} />
+        <Route path='deleted-riders' element={<RidersDeleted/>} />
         <Route path='vendors-management' element={<VendorsManagement/>} />
         <Route path='vendors-management/:vid/:vendorName' element={<VendorDetails/>} />
         <Route path='riders/:rid' element={<RidersDetails/>} />

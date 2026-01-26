@@ -7,7 +7,7 @@ export default function AboutUs() {
                 <div className="w-full flex justify-center">
                     <h2 className="text-red-600! font-bold! absolute z-10 top-77 text-center line-clamp-3">ABOUT</h2>
                     <h1 className="text-red-600! font-extrabold! absolute z-10 top-90 text-center">Our Company</h1>
-                    <p className="absolute top-107 text-lg text-center w-150! md:w-200! font-medium">
+                    <p className="absolute top-107 text-lg text-center w-80! md:w-200! font-medium">
                         An all round courier problem solving, one call solution to many industries and businesses in the Karachi.
                     </p>
                 </div>

@@ -40,7 +40,7 @@ export default function AssignedOrders() {
         return info.order;
     }
     const { data: apiData, isLoading: ordersLoading, error: ordersError } = useQuery({
-        queryKey: ['assignedOrders'],
+        queryKey: ['assignedOrdersToPick'],
         queryFn: getAssignedOrders,
         retry: 1,
         refetchOnWindowFocus: false
@@ -130,7 +130,7 @@ export default function AssignedOrders() {
                                     {/* <td className="p-4 text-center text-nowrap font-semibold">Delivery Address </td> */}
                                     <td className="p-4 text-center text-nowrap font-semibold">Receiver Contact No </td>
                                     <td className="p-4 text-center text-nowrap font-semibold">Pickup Address </td>
-                                    <td className="p-4 text-center text-nowrap font-semibold">Items </td>
+                                    <td className="p-4 text-center text-nowrap font-semibold">Dimensions </td>
                                     <td className="p-4 text-center text-nowrap font-semibold">Order Amount </td>
                                     {/* <td className="p-4 text-center text-nowrap font-semibold">Timer</td> */}
                                     <td className="p-4 text-center text-nowrap font-semibold">Status </td>
@@ -148,7 +148,7 @@ export default function AssignedOrders() {
                                             {/* <td className="p-4 text-center text-nowrap">{b?.DeliveryAddress}</td> */}
                                             <td className="p-4 text-center text-nowrap">{b?.CustomerContactNo}</td>
                                             <td className="p-4 text-center text-nowrap">{b?.PickupAddress}</td>
-                                            <td className="p-4 text-center text-nowrap">{b?.Items}</td>
+                                            <td className="p-4 text-center text-nowrap">{b?.Dimensions}</td>
                                             <td className="p-4 text-center text-nowrap">{b?.OrderAmount} Rs</td>
                                             {/* <td className="p-4 text-center text-nowrap text-red-600">
                                                 <b>{formatElapsedTime(timerFun(b?.RiderAssignedDate))}</b>

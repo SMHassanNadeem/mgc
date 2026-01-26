@@ -97,6 +97,36 @@ const getRiders = async (req, res, next) => {
     }
 }
 
+const getActiveRiders = async (req, res, next) => {
+    try {
+        const riders = await RidersModel.find({ status: "activeRider" })
+        res.json(riders)
+    }
+    catch (err) {
+        return next(new HttpError("Could not Get rider", 500));
+    }
+}
+
+const getNotDeletedRiders = async (req, res, next) => {
+    try {
+        const riders = await RidersModel.find({ status: { $in: ["rider", "activeRider"] } })
+        res.json(riders)
+    }
+    catch (err) {
+        return next(new HttpError("Could not Get rider", 500));
+    }
+}
+
+const getDeletedRiders = async (req, res, next) => {
+    try {
+        const riders = await RidersModel.find({ status: "BlockedRider" })
+        res.json(riders)
+    }
+    catch (err) {
+        return next(new HttpError("Could not Get rider", 500));
+    }
+}
+
 //GETTING DATA BY ID
 const getRidersById = async (req, res, next) => {
     try {
@@ -152,7 +182,18 @@ const getRidersByToken = async (req, res, next) => {
 
 //TO UPDATE FOR PATCH MEANS UPDATE WHICH IS SEND
 const updateRidersById = async (req, res, next) => {
-    const { ridersName, emailAddress, password } = req.body;
+    const {
+        ridersName,
+        emailAddress,
+        password,
+        contactNo,
+        vehicle,
+        licenseNo,
+        assignedArea,
+        cnic,
+        orders,
+        status,
+    } = req.body;
     const ridersId = req.params.rid;
     let riders;
     try {
@@ -160,9 +201,31 @@ const updateRidersById = async (req, res, next) => {
         if (!riders) {
             return next(new HttpError("Riders not found", 404));
         }
+
+        const email = await RidersModel.findOne({ emailAddress });
+        if (email) {
+            return next(new HttpError("Email already exists", 422));
+        }
+
+        if (contactNo) riders.contactNo = contactNo;
+        if (vehicle) riders.vehicle = vehicle;
+        if (licenseNo) riders.licenseNo = licenseNo;
+        if (assignedArea) riders.assignedArea = assignedArea;
+        if (cnic) riders.cnic = cnic;
+        if (orders) riders.orders = orders;
+        if (status) riders.status = status;
+
         if (ridersName) riders.ridersName = ridersName;
         if (emailAddress) riders.emailAddress = emailAddress;
-        if (password) riders.password = password;
+        if (password) {
+            let hashedPassword;
+            try {
+                hashedPassword = await bcrypt.hash(password, 12)
+            } catch (err) {
+                return next(new HttpError('Could not update user', 500))
+            }
+            riders.password = hashedPassword;
+        }
         await riders.save();
     }
     catch (err) {
@@ -195,5 +258,10 @@ exports.updateRidersById = updateRidersById;
 
 exports.signup = signup;
 exports.getRiders = getRiders;
+
+exports.getActiveRiders = getActiveRiders;
+exports.getNotDeletedRiders = getNotDeletedRiders;
+exports.getDeletedRiders = getDeletedRiders;
+
 exports.getRidersById = getRidersById;
 exports.getRidersByToken = getRidersByToken;

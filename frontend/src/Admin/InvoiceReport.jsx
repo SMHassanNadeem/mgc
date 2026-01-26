@@ -1,3 +1,4 @@
+import logo from '../assets/MGC.png';
 import { useEffect } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom"
@@ -44,38 +45,70 @@ export default function RidersDetails() {
     }, [])
 
 
-    const generatePDF = () => {
+    const loadImage = (url) =>
+        new Promise((resolve) => {
+            const img = new Image();
+            img.src = url;
+            img.onload = () => resolve(img);
+        });
+    const generatePDF = async () => {
         try {
             // Create new PDF
             const pdf = new jsPDF('p', 'mm', 'a4');
 
             // Set margins
-            const margin = 10;
-            const pageWidth = 210;
+            const margin = 5;
+            const pageWidth = 250;
             const pageHeight = 297;
-            const contentWidth = 200; // Fixed width for table
+            const contentWidth = 190; // Fixed width for table
             let yPosition = margin;
 
             // Add rider info
             const rider = ridersData?.[0];
 
             // Title
-            pdf.setFontSize(20);
-            pdf.text('INVOICE REPORT', pageWidth / 2, yPosition, { align: 'center' });
+            yPosition += 10;
+
+            const img = await loadImage(logo);
+
+            // Sizes
+            const headingFontSize = 20;
+            const logoHeight = 25;
+            const logoWidth = 70    ;
+            pdf.setFontSize(headingFontSize);
+            const text = 'INVOICE REPORT';
+            const textWidth = pdf.getTextWidth(text);
+            const gap = 3;
+            const totalWidth = logoWidth + gap + textWidth;
+            const startX = ((pdf.internal.pageSize.getWidth() - totalWidth) / 2)-40;
+            pdf.addImage(
+                img,
+                'PNG',
+                startX,
+                yPosition - logoHeight + 15, // vertical alignment tweak
+                logoWidth,
+                logoHeight
+            );
+            pdf.text(
+                text,
+                (pageWidth / 2),
+                yPosition
+                , { align: 'center' }
+            );
             yPosition += 10;
 
             pdf.setFontSize(12);
-            pdf.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth / 2, yPosition, { align: 'center' });
+            pdf.text(`Generated: ${new Date().toLocaleDateString()}`, (pageWidth / 2), yPosition, { align: 'center' });
             yPosition += 15;
 
             // Rider Info Table - NO WRAPPING
             pdf.setFontSize(14);
-            pdf.text('Vendor Information', margin, yPosition);
+            pdf.text('Sender Info', margin, yPosition);
             yPosition += 10;
 
             pdf.setFontSize(10);
             const DataRows = [
-                ['Vendor Name:', filteredData?.creatorName && filteredData?.creatorName.length > 0 ? 'Different-Vendors' : filteredData[0]?.creatorName || 'N/A'],
+                ['Sender Name:', filteredData?.creatorName && filteredData?.creatorName.length > 0 ? 'Different-Senders' : filteredData[0]?.creatorName || 'N/A'],
                 // ['CNIC:', filteredData?.Cnic || 'N/A'],
                 // ['Contact No:', filteredData?.PhoneNo || 'N/A'],
                 // ['Email:', filteredData?.Email || 0],
@@ -123,7 +156,7 @@ export default function RidersDetails() {
                 pdf.setFontSize(8); // Smaller font for table
 
                 // Table headers
-                const headers = ['Vendor', 'Receiver', 'Delivery Address', 'Order Date', 'Amount', 'Status'];
+                const headers = ['Vendor', 'Receiver', 'Order Date', 'Amount', 'Status'];
                 let xPosition = margin;
                 const colWidth = contentWidth / headers.length; // Equal column width
 
@@ -152,7 +185,7 @@ export default function RidersDetails() {
                     const row = [
                         order?.creatorName || 'N/A',
                         order?.CustomerName || 'N/A',
-                        order?.DeliveryAddress || 'N/A',
+                        // order?.DeliveryAddress || 'N/A',
                         order?.OrderDate ? new Date(order.OrderDate).toLocaleDateString() : 'N/A',
                         order?.OrderAmount || '0',
                         order?.status || 'N/A'
@@ -198,7 +231,7 @@ export default function RidersDetails() {
                 const totalAmount = filteredData.reduce((sum, order) => sum + (parseFloat(order?.OrderAmount) || 0), 0);
                 pdf.setFontSize(10);
                 pdf.text(`Total Amount: ${totalAmount.toFixed(2)}`, margin, yPosition);
-                pdf.text(`Total Orders: ${filteredData.length}`, pageWidth - margin - 30, yPosition, { align: 'right' });
+                pdf.text(`Total Orders: ${filteredData.length}`, pageWidth - margin - 60, yPosition, { align: 'right' });
             } else {
                 // No orders message
                 pdf.setFontSize(12);
@@ -281,7 +314,6 @@ export default function RidersDetails() {
                                     <tr>
                                         <td className="p-4 text-center text-nowrap font-semibold">Sender Name </td>
                                         <td className="p-4 text-center text-nowrap font-semibold">Receiver Name </td>
-                                        <td className="p-4 text-center text-nowrap font-semibold">Delivery Address </td>
                                         <td className="p-4 text-center text-nowrap font-semibold">Order tracking Id </td>
                                         {/* <td className="p-4 text-center text-nowrap font-semibold">After Assign, Delivered in </td> */}
                                         <td className="p-4 text-center text-nowrap font-semibold">Order Date </td>
@@ -291,7 +323,7 @@ export default function RidersDetails() {
                                         <td className="p-4 text-center text-nowrap font-semibold">Order Amount</td>
                                         <td className="p-4 text-center text-nowrap font-semibold">Delivery Address </td>
                                         <td className="p-4 text-center text-nowrap font-semibold">Status</td>
-                                        <td className="p-4 text-center text-nowrap font-semibold">Items </td>
+                                        <td className="p-4 text-center text-nowrap font-semibold">Dimensions </td>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -300,18 +332,17 @@ export default function RidersDetails() {
                                             <tr>
                                                 <td className="p-4 text-center text-nowrap">{a?.creatorName}</td>
                                                 <td className="p-4 text-center text-nowrap">{a?.CustomerName}</td>
-                                                <td className="p-4 text-center text-nowrap">{a?.DeliveryAddress}</td>
                                                 <td className="p-4 text-center text-nowrap">{a?.trackingId}</td>
                                                 {/* <td className="p-4 text-center text-nowrap">{timerFun(a?.RiderAssignedDate, a?.RiderDeliveredDate)}</td> */}
                                                 <td className="p-4 text-center text-nowrap">{a?.OrderDate}</td>
                                                 <td className="p-4 text-center text-nowrap">{a?.CustomerContactNo}</td>
-                                                <td className="p-4 text-center text-nowrap">{a?.PickupAddress}</td>
+                                                <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.PickupAddress}</td>
 
                                                 <td className="p-4 text-center text-nowrap">{a?.OrderType}</td>
                                                 <td className="p-4 text-center text-nowrap">{a?.OrderAmount}</td>
-                                                <td className="p-4 text-center text-nowrap">{a?.DeliveryAddress}</td>
+                                                <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.DeliveryAddress}</td>
                                                 <td className="p-4 text-center text-nowrap">{a?.status}</td>
-                                                <td className="p-4 text-center text-nowrap">{a?.Items}</td>
+                                                <td className="p-4 text-center text-nowrap">{a?.Dimensions}</td>
                                             </tr>
                                         ))
                                     }

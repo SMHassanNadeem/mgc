@@ -18,6 +18,7 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true}, //minlength: 6 
     orders:[{ type: mongoose.Types.ObjectId, ref: 'OrdersModel' }], // to add relation b/w user and place and ref is to connect with other collection and array to allow array
     status:{ type: String, required: false},
+    storeLink: { type: String, required: false },
 })
 
 module.exports = mongoose.model('UserModel', userSchema)

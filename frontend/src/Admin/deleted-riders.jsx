@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-export default function Riders() {
+export default function RidersDeleted() {
     const [openMenu, setOpenMenu] = useState(false)
     const [openMenuAddUser, setOpenMenuAddUser] = useState(false)
     const [searchTerm, setSearchTerm] = useState("");
@@ -21,7 +21,7 @@ export default function Riders() {
             return;
         }
 
-        const data = await fetch('http://localhost:3000/riders/riders-not-deleted', {
+        const data = await fetch('http://localhost:3000/riders/riders-deleted', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -213,7 +213,7 @@ export default function Riders() {
             <div className="bg-white px-[2%] py-[2%] text-center rounded flex items-center justify-start w-full">
                 <label htmlFor="search"><i className="fas fa-search text-gray-400 m-0 p-0"></i></label>
                 <input onChange={(e) => setSearchTerm(e.target.value)} id="search" className="rounded pl-2 w-[150px] sm:w-full focus:outline-0 text-md! font-medium" type="search" placeholder="Search" />
-                <button onClick={() => setOpenMenuAddUser(true)} className="bg-[#d10115] text-gray-100 font-medium py-2 px-4 rounded text-nowrap">Add Rider</button>
+                {/* <button onClick={() => setOpenMenuAddUser(true)} className="bg-[#d10115] text-gray-100 font-medium py-2 px-4 rounded text-nowrap">Add Rider</button> */}
                 <Dialog
                     open={openMenuAddUser}
                     onClose={() => setOpenMenuAddUser(false)}

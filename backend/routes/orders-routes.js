@@ -11,6 +11,9 @@ const userControllers = require('../controller/users-controller')
 
 router.post('/admin/vendor/:vid/:vendorName', userControllers.authenticateAdminToken, ordersControllers.createVendorOrders)
 
+//For Third Party
+router.post('/tp-vendor/:vid/:vendorName/:token', ordersControllers.authenticateThirdPartyToken, ordersControllers.createVendorOrders)
+
 router.get('/get-all-orders', userControllers.authenticateAdminToken, ordersControllers.getAllOrders)
 router.get('/', userControllers.authenticateAdminToken, ordersControllers.getOrders)
 
@@ -31,6 +34,11 @@ router.get('/orders-rider-delivered', userControllers.authenticateAdminToken, or
 router.get('/orders-cancelled-by-vendor', userControllers.authenticateAdminToken, ordersControllers.getOrdersByStatusCancelledByVendor)
 
 router.get('/order-data-of-user', ordersControllers.authenticateApprovedUserToken, ordersControllers.getOrdersByToken)
+
+
+//loader
+router.get('/loader-auth-check', ordersControllers.authenticateVendorAndApprovedUserToken, (req,res) => { res.json({dummy: "checking auth"}) } )
+
 
 router.get('/order-data-of-vendor', ordersControllers.authenticateVendorToken, ordersControllers.getOrdersByToken)
 
@@ -60,5 +68,9 @@ router.patch('/:pid', ordersControllers.authenticateAdminAndRiderAndApprovedandV
 router.patch('/return/:pid', ordersControllers.authenticateAdminAndRiderAndApprovedandVendorToken, ordersControllers.updateReturnOrdersById)
 
 router.delete('/:pid', userControllers.authenticateAdminToken, ordersControllers.deleteOrdersById)
+
+router.delete('/user/:pid', ordersControllers.authenticateApprovedUserToken, ordersControllers.deleteUserOrdersById)
+
+router.delete('/vendor/:pid', ordersControllers.authenticateVendorToken, ordersControllers.deleteUserOrdersById)
 
 module.exports = router;

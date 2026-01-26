@@ -46,7 +46,7 @@ export default function OrdersWithRider() {
     })
 
     const filteredData = apiData?.filter((item) =>
-        [item.CustomerName, item.DeliveryCity, item.trackingId, item.CustomerContactNo, item.DeliveryAddress, item.Items, item.status]
+        [item.CustomerName, item.DeliveryCity, item.trackingId, item.CustomerContactNo, item.DeliveryAddress, item.Dimensions, item.status]
             .some((field) =>
                 String(field).toLowerCase().includes(searchTerm.toLowerCase())
             )
@@ -96,7 +96,7 @@ export default function OrdersWithRider() {
                                 <td className="p-4 text-center text-nowrap font-semibold">Delivered Date </td>
                                 {/* <td className="p-4 text-center text-nowrap font-semibold">Customer Contact No </td> */}
                                 {/* <td className="p-4 text-center text-nowrap font-semibold">Delivery Address </td> */}
-                                <td className="p-4 text-center text-nowrap font-semibold">Items </td>
+                                <td className="p-4 text-center text-nowrap font-semibold">Dimensions </td>
                                 <td className="p-4 text-center text-nowrap font-semibold">Status </td>
                             </tr>
                         </thead>
@@ -111,7 +111,7 @@ export default function OrdersWithRider() {
                                         <td className="p-4 text-center text-nowrap">{a?.RiderDeliveredDate}</td>
                                         {/* <td className="p-4 text-center text-nowrap">{a?.CustomerContactNo}</td> */}
                                         {/* <td className="p-4 text-center text-nowrap">{a?.DeliveryAddress}</td> */}
-                                        <td className="p-4 text-center text-nowrap">{a?.Items}</td>
+                                        <td className="p-4 text-center text-nowrap">{a?.Dimensions}</td>
                                         <td className="p-4 text-center text-nowrap">{a?.status}</td>
                                     </tr>
                                 ))}

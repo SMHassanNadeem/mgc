@@ -126,7 +126,7 @@ export default function UnassignedOrders() {
                                             <td className="p-4 text-center text-nowrap">{a?.DeliveryCity}</td>
                                             <td className="p-4 text-center text-nowrap">{a?.status}</td>
                                             <td className="p-4 text-center text-nowrap">{a?.CustomerContactNo}</td>
-                                            <td className="p-4 text-center text-nowrap">{a?.DeliveryAddress}</td>
+                                            <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.DeliveryAddress}</td>
                                             <td className="p-4 text-center text-nowrap">{a?.trackingId}</td>
                                         </tr>
                                     ))

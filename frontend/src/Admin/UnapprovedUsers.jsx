@@ -142,7 +142,7 @@ export default function UnapprovedUsers() {
 
     return (
         <div className=" overflow-y-scroll bg-gray-100 flex flex-col gap-4 p-2 justify-start items-start w-7/8! sm:w-3/4 h-screen">
-            
+
             <ToastContainer
                 pauseOnHover
             />
@@ -166,7 +166,9 @@ export default function UnapprovedUsers() {
                                     <td className="p-4 text-center text-nowrap font-semibold">Company Name</td>
                                     <td className="p-4 text-center text-nowrap font-semibold">Email </td>
                                     <td className="p-4 text-center text-nowrap font-semibold">Phone No </td>
-                                    {/* <td className="p-4 text-center text-nowrap font-semibold">Cnic</td> */}
+                                    <td className="p-4 text-center text-nowrap font-semibold">Address </td>
+                                    <td className="p-4 text-center text-nowrap font-semibold">Cnic</td>
+                                    <td className="p-4 text-center text-nowrap font-semibold">View Store</td>
                                     <td className="p-4 text-center text-nowrap font-semibold">Approve</td>
                                     <td className="p-4 text-center text-nowrap font-semibold">Cancel</td>
                                 </tr>
@@ -178,7 +180,22 @@ export default function UnapprovedUsers() {
                                             <td className="p-4 text-center text-nowrap">{a?.CompanyName}</td>
                                             <td className="p-4 text-center text-nowrap">{a?.Email}</td>
                                             <td className="p-4 text-center text-nowrap">{a?.PhoneNo}</td>
-                                            {/* <td className="p-4 text-center text-nowrap">{a?.cnic}</td> */}
+                                            <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.PickupAddress}</td>
+                                            <td className="p-4 text-center text-nowrap">{a?.Cnic}</td>
+                                            <td className="p-4 text-center text-nowrap">
+                                                {
+                                                    a?.storeLink
+                                                        ?
+                                                        <a target="_blank" href={
+                                                            a?.storeLink?.startsWith("http://") || a?.storeLink?.startsWith("https://")
+                                                                ? a.storeLink
+                                                                : `https://${a?.storeLink}`
+                                                        }>
+                                                            View Store
+                                                        </a>
+                                                        : "null"
+                                                }
+                                            </td>
                                             <td className="p-4 text-center text-nowrap">
                                                 <button onClick={() => approve(a?._id)} className='bg-blue-400 text-white rounded p-2'>Approve</button>
                                             </td>

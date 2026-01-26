@@ -11,7 +11,7 @@ const bcrypt = require('bcrypt');
 //CREATING DATA
 const signup = async (req, res, next) => {
     try {
-        const {status, CompanyName, PhoneNo, PickupAddress, Cnic, personOfContact, Email, BankName, AccNo, BranchCode, IBAN, AccTitle, BranchName, SwiftCode, password } = req.body;
+        const { status, CompanyName, PhoneNo, PickupAddress, Cnic, personOfContact, Email, BankName, AccNo, BranchCode, IBAN, AccTitle, BranchName, SwiftCode, password, storeLink } = req.body;
         //cnicCopyImage will be handle soon
         const existingUser = await UserModel.findOne({ Email });
         if (existingUser) {
@@ -42,6 +42,7 @@ const signup = async (req, res, next) => {
             // image,
             orders: [], // to add relation b/w user and place and one user can have multiple places so I want to add places dynamically instead of overwritting here
             status: "",
+            storeLink,
         })
         await createdUser.save()
 
@@ -60,7 +61,7 @@ const signup = async (req, res, next) => {
         if (io) {
             // Emit to all connected clients
             io.emit('user-added', {
-                notif:"new unapproved user"
+                notif: "new unapproved user"
             });
         }
 
@@ -73,7 +74,7 @@ const signup = async (req, res, next) => {
 
 const signupVendor = async (req, res, next) => {
     try {
-        const {CompanyName, PhoneNo, PickupAddress, Cnic, personOfContact, Email, BankName, AccNo, BranchCode, IBAN, AccTitle, BranchName, SwiftCode, password } = req.body;
+        const { CompanyName, PhoneNo, PickupAddress, Cnic, personOfContact, Email, BankName, AccNo, BranchCode, IBAN, AccTitle, BranchName, SwiftCode, password, storeLink } = req.body;
         //cnicCopyImage will be handle soon
         const existingUser = await UserModel.findOne({ Email });
         if (existingUser) {
@@ -104,6 +105,7 @@ const signupVendor = async (req, res, next) => {
             // image,
             orders: [], // to add relation b/w user and place and one user can have multiple places so I want to add places dynamically instead of overwritting here
             status: "vendor",
+            storeLink,
         })
         await createdUser.save()
 
@@ -154,10 +156,10 @@ const login = async (req, res, next) => {
                 return res.status(200).json({ message: "admin", token })
             }
             if (foundUser.status === "approved") {
-                return res.status(200).json({ message: "approved", token })
+                return res.status(200).json({ message: "approved", token, name: foundUser?.CompanyName })
             }
             if (foundUser.status === "vendor") {
-                return res.status(200).json({ message: "vendor", token })
+                return res.status(200).json({ message: "vendor", token, name: foundUser?.CompanyName })
             }
         }
 
@@ -223,7 +225,7 @@ const getUser = async (req, res, next) => {
 
 const getVendor = async (req, res, next) => {
     try {
-        const users = await UserModel.find({status: "vendor"})
+        const users = await UserModel.find({ status: { $in: ["vendor", "BlockedVendor"] } })
         res.json(users)
     }
     catch (err) {
@@ -258,7 +260,7 @@ const getUnapprovedUser = async (req, res, next) => {
 }
 const getApprovedUser = async (req, res, next) => {
     try {
-        const userById = await UserModel.find({ status: "approved" })
+        const userById = await UserModel.find({ status: { $in: ["approved", "Blocked"] } })
         if (!userById) {
             return next(new HttpError("User not found", 404));
         }
@@ -270,7 +272,26 @@ const getApprovedUser = async (req, res, next) => {
 
 //TO UPDATE FOR PATCH MEANS UPDATE WHICH IS SEND
 const updateUserById = async (req, res, next) => {
-    const { CompanyName, Email, password, status } = req.body;
+    const {
+        status,
+        CompanyName,
+        PhoneNo,
+        PickupAddress,
+        Cnic,
+        personOfContact,
+        Email,
+        BankName,
+        AccNo,
+        BranchCode,
+        IBAN,
+        AccTitle,
+        BranchName,
+        SwiftCode,
+        password,
+        storeLink
+    } = req.body;
+
+
     const userId = req.params.uid;
     let user;
     try {
@@ -278,10 +299,39 @@ const updateUserById = async (req, res, next) => {
         if (!user) {
             return next(new HttpError("User not found", 404));
         }
-        if (status) user.status = status;
+
+        const existingUser = await UserModel.findOne({ Email });
+        if (existingUser) {
+            return next(new HttpError("Email already exists", 422));
+        }
+
         if (CompanyName) user.CompanyName = CompanyName;
+        if (PhoneNo) user.PhoneNo = PhoneNo;
+        if (PickupAddress) user.PickupAddress = PickupAddress;
+        if (Cnic) user.Cnic = Cnic;
+        if (personOfContact) user.personOfContact = personOfContact;
         if (Email) user.Email = Email;
-        if (password) user.password = password;
+        if (BankName) user.BankName = BankName;
+        if (AccNo) user.AccNo = AccNo;
+        if (BranchCode) user.BranchCode = BranchCode;
+        if (IBAN) user.IBAN = IBAN;
+        if (AccTitle) user.AccTitle = AccTitle;
+        if (BranchName) user.BranchName = BranchName;
+        if (SwiftCode) user.SwiftCode = SwiftCode;
+        if (storeLink) user.storeLink = storeLink;
+
+
+        if (status) user.status = status;
+        if (password) {
+            let hashedPassword;
+            try {
+                hashedPassword = await bcrypt.hash(password, 12)
+            } catch (err) {
+                return next(new HttpError('Could not update user', 500))
+            }
+            user.password = hashedPassword;
+        }
+
         await user.save();
     }
     catch (err) {
@@ -295,7 +345,8 @@ const deleteUserById = async (req, res, next) => {
     const userId = req.params.uid;
     let user;
     try {
-        user = await UserModel.findById(userId).populate('orders')
+        // user = await UserModel.findById(userId).populate('orders')
+        user = await UserModel.findById(userId);
     } catch (err) {
         return next(new HttpError('user not found', 404))
     }
@@ -305,15 +356,16 @@ const deleteUserById = async (req, res, next) => {
     }
 
     try {
-        const sess = await mongoose.startSession()
-        sess.startTransaction()
+        // const sess = await mongoose.startSession()
+        // sess.startTransaction()
 
-        await UserModel.deleteMany({ creator: userId }, { session: sess });
+        // await OrdersModel.deleteMany({ creator: userId }, { session: sess });
         //hence we had populated creator data in place, so we can access creator user data and and can manipulate it
 
-        await user.deleteOne({ session: sess })
+        // await user.deleteOne({ session: sess })
+        await user.deleteOne()
 
-        await sess.commitTransaction()
+        // await sess.commitTransaction()
     } catch (err) {
         return next(new HttpError('Could not delete', 500))
     }

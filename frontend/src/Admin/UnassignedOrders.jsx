@@ -57,7 +57,7 @@
 //             navigate('/');
 //             return;
 //         }
-//         const data = await fetch('http://localhost:3000/riders/', {
+//         const data = await fetch('http://localhost:3000/riders/riders-active', {
 //             method: 'GET',
 //             headers: {
 //                 'Content-Type': 'application/json',
@@ -206,11 +206,11 @@
 //                                     {/* <td className="p-4 text-center text-nowrap font-semibold">Order tracking Id </td> */}
 //                                     <td className="p-4 text-center text-nowrap font-semibold">Order Date </td>
 //                                     {/* <td className="p-4 text-center text-nowrap font-semibold">Customer Contact No </td> */}
-//                                     <td className="p-4 text-center text-nowrap font-semibold">Pickup Address </td>
+//                                     <td className="p-4 text-center text-nowrap font-semibold max-w-[100px] text-wrap!">Pickup Address </td>
 
 //                                     {/* <td className="p-4 text-center text-nowrap font-semibold">Order Type</td> */}
 //                                     {/* <td className="p-4 text-center text-nowrap font-semibold">Order Amount</td> */}
-//                                     {/* <td className="p-4 text-center text-nowrap font-semibold">Delivery Address </td> */}
+//                                     {/* <td className="p-4 text-center text-nowrap font-semibold max-w-[100px] text-wrap!">Delivery Address </td> */}
 //                                     <td className="p-4 text-center text-nowrap font-semibold">Status</td>
 //                                     {/* <td className="p-4 text-center text-nowrap font-semibold">Items </td> */}
 //                                     <td className="p-4 text-center text-nowrap font-semibold">Assign </td>
@@ -225,11 +225,11 @@
 //                                             {/* <td className="p-4 text-center text-nowrap">{a?._id}</td> */}
 //                                             <td className="p-4 text-center text-nowrap">{a?.OrderDate}</td>
 //                                             {/* <td className="p-4 text-center text-nowrap">{a?.CustomerContactNo}</td> */}
-//                                             <td className="p-4 text-center text-nowrap">{a?.PickupAddress}</td>
+//                                             <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.PickupAddress}</td>
 
 //                                             {/* <td className="p-4 text-center text-nowrap">{a?.OrderType}</td> */}
 //                                             {/* <td className="p-4 text-center text-nowrap">{a?.OrderAmount}</td> */}
-//                                             {/* <td className="p-4 text-center text-nowrap">{a?.DeliveryAddress}</td> */}
+//                                             {/* <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.DeliveryAddress}</td> */}
 //                                             <td className="p-4 text-center text-nowrap">{a?.status}</td>
 //                                             {/* <td className="p-4 text-center text-nowrap">{a?.Items}</td> */}
 
@@ -415,7 +415,7 @@ export default function UnassignedOrders() {
             navigate('/');
             return;
         }
-        const data = await fetch('http://localhost:3000/riders/', {
+        const data = await fetch('http://localhost:3000/riders/riders-active', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -597,7 +597,7 @@ export default function UnassignedOrders() {
                                         <tr key={a?._id}>
                                             <td className="p-4 text-center text-nowrap">{a?.creatorName}</td>
                                             <td className="p-4 text-center text-nowrap">{a?.OrderDate}</td>
-                                            <td className="p-4 text-center text-nowrap">{a?.PickupAddress}</td>
+                                            <td className="p-4 text-center text-nowrap max-w-[100px] text-wrap!">{a?.PickupAddress}</td>
                                             <td className="p-4 text-center text-nowrap">{a?.status}</td>
                                             <td className="p-4 text-center">
                                                 <button

@@ -14,7 +14,7 @@ const authenticateApprovedUserToken = (req, res, next) => {
     if (!token) {
         return res.status(401).json({ error: 'Access token required' });
     }
-    jwt.verify(token, "super-duper-hassan-secret-dont-share", (err, user) => {
+    jwt.verify(token, "super-duper-hassan-secret-dont-share", async (err, user) => {
         if (err) {
             // Token is either expired or invalid
             if (err.name === 'TokenExpiredError') {
@@ -24,7 +24,9 @@ const authenticateApprovedUserToken = (req, res, next) => {
         }
         req.user = user;
 
-        if (req.user.status !== "approved") {
+        let userIN = await UserModel.findOne({_id: req.user.userId})
+
+        if (userIN.status !== "approved") {
             return next(new HttpError('Only Admin is authenticated', 403))
         }
         next();
@@ -39,7 +41,7 @@ const authenticateVendorToken = (req, res, next) => {
     if (!token) {
         return res.status(401).json({ error: 'Access token required' });
     }
-    jwt.verify(token, "super-duper-hassan-secret-dont-share", (err, user) => {
+    jwt.verify(token, "super-duper-hassan-secret-dont-share", async (err, user) => {
         if (err) {
             // Token is either expired or invalid
             if (err.name === 'TokenExpiredError') {
@@ -49,13 +51,44 @@ const authenticateVendorToken = (req, res, next) => {
         }
         req.user = user;
 
-        if (req.user.status !== "vendor") {
+        let userIN = await UserModel.findOne({_id: req.user.userId})
+
+        if (userIN.status !== "vendor") {
             return next(new HttpError('Only vendor is authenticated', 403))
         }
         next();
     });
 };
 
+const authenticateVendorAndApprovedUserToken = async (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) {
+        return res.status(401).json({ error: 'Access token required' });
+    }
+    jwt.verify(token, "super-duper-hassan-secret-dont-share", async (err, user) => {
+        if (err) {
+            // Token is either expired or invalid
+            if (err.name === 'TokenExpiredError') {
+                return res.status(401).json({ error: 'Token expired' });
+            }
+            return res.status(403).json({ error: 'Invalid token' });
+        }
+        req.user = user;
+
+        let userIN = await UserModel.findOne({_id: req.user.userId})
+
+        if (userIN.status === "vendor") {
+            return res.status(200).json({ message: 'vendor' });
+        }
+
+        if (userIN.status === "approved") {
+            return res.status(200).json({ message: 'approved' });
+        }
+
+        return next(new HttpError('Only vendor is authenticated', 403))
+    });
+};
 
 const authenticateAdminAndRiderAndApprovedandVendorToken = async (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -115,9 +148,47 @@ const authenticateAdminAndRiderToken = async (req, res, next) => {
     }
 };
 
+//For Third Party
+const authenticateThirdPartyToken = async (req, res, next) => {
+    try {
+        // const authHeader = req.headers['authorization'];
+        // const token = authHeader && authHeader.split(' ')[1];
+        const token = req.params.token;
+        if (!token) {
+            return res.status(401).json({ error: 'Access token required' });
+        }
+        let decoded
+        try {
+            decoded = jwt.verify(token, "super-duper-hassan-secret-dont-share");
+        }
+        catch (err) {
+            if (err.name === 'TokenExpiredError') {
+                return res.status(401).json({ error: 'Token expired' });
+            }
+            return res.status(403).json({ error: 'Invalid token' });
+        }
+
+        let userIN = await UserModel.findOne({_id: decoded.userId})
+
+        if (userIN.status !== "vendor") {
+            return next(new HttpError('Not authenticated', 403));
+        }
+
+        let orderIN = await OrdersModel.find({creator: decoded.userId})
+        if (orderIN.length >= 2) {
+            return next(new HttpError('Rate Limit Exceeded', 403));
+        }
+
+        return next()
+    }
+    catch (err) {
+        return next(new HttpError('Authentication Error', 500))
+    }
+};
+
 //CREATING DATA
 const createOrders = async (req, res, next) => {
-    const { OrderType, OrderAmount, CustomerName, DeliveryCity, PickupCity, OrderDate, CustomerContactNo, DeliveryAddress, PickupAddress, Items, fragility, weight } = req.body;
+    const { OrderType, OrderAmount, CustomerName, DeliveryCity, PickupCity, OrderDate, CustomerContactNo, DeliveryAddress, PickupAddress, Dimensions, fragility, weight } = req.body;
 
     const authHeader = req.headers['authorization'];
     if (!authHeader) {
@@ -166,7 +237,7 @@ const createOrders = async (req, res, next) => {
         CustomerContactNo,
         DeliveryAddress,
         PickupAddress,
-        Items,
+        Dimensions,
         status: "order - placed",
         creator: creatorId,
         creatorName,
@@ -184,24 +255,25 @@ const createOrders = async (req, res, next) => {
     })
 
     //creating orders & adding it to a user
-    let user;
-    try {
-        user = await UserModel.findById(creatorId);
-    } catch (err) {
-        return next(new HttpError('Creating Order failed', 500))
-    }
-    if (!user) {
-        return next(new HttpError('Could not find user for provided Id', 404))
-    }
+    // let user;
+    // try {
+    //     user = await UserModel.findById(creatorId);
+    // } catch (err) {
+    //     return next(new HttpError('Creating Order failed', 500))
+    // }
+    // if (!user) {
+    //     return next(new HttpError('Could not find user for provided Id', 404))
+    // }
 
     //if user exist then we store or create that new document with our new order and second we can we can add the orderId to the corresponding user
     try {
-        const sess = await mongoose.startSession()
-        sess.startTransaction()
-        await createdOrders.save({ session: sess })
-        user.orders.push(createdOrders)
-        await user.save({ session: sess })
-        await sess.commitTransaction() //if all above tasks completed then session comes to end and if error in any one then catch error
+        // const sess = await mongoose.startSession()
+        // sess.startTransaction()
+        // await createdOrders.save({ session: sess })
+        // user.orders.push(createdOrders)
+        // await user.save({ session: sess })
+        await createdOrders.save()
+        // await sess.commitTransaction() //if all above tasks completed then session comes to end and if error in any one then catch error
     } catch (err) {
         return next(new HttpError("Could not Create order", 500));
     }
@@ -210,12 +282,12 @@ const createOrders = async (req, res, next) => {
 
 
 const createVendorOrders = async (req, res, next) => {
-    const { OrderType, OrderAmount, CustomerName, DeliveryCity, PickupCity, OrderDate, CustomerContactNo, DeliveryAddress, PickupAddress, Items, fragility, weight } = req.body;
+    const { OrderType, OrderAmount, CustomerName, DeliveryCity, PickupCity, OrderDate, CustomerContactNo, DeliveryAddress, PickupAddress, Dimensions, fragility, weight } = req.body;
     
     let creatorId = req.params.vid;
     let creatorName = req.params.vendorName;
 
-    const perfectOrderTrackingId = `mgc-${new Date(OrderDate).getTime().toString().slice(-9)}${parseInt(Math.random() * 10)}${CustomerContactNo.slice(-4)}`
+    const perfectOrderTrackingId = `mgc-${new Date(OrderDate).getTime().toString().slice(-9)}${parseInt(Math.random() * 10)}${CustomerContactNo.toString().slice(-4)}`
 
     let trackId;
     try {
@@ -244,7 +316,7 @@ const createVendorOrders = async (req, res, next) => {
         CustomerContactNo,
         DeliveryAddress,
         PickupAddress,
-        Items,
+        Dimensions,
         status: "order - placed",
         creator: creatorId,
         creatorName,
@@ -262,24 +334,25 @@ const createVendorOrders = async (req, res, next) => {
     })
 
     //creating orders & adding it to a user
-    let user;
-    try {
-        user = await UserModel.findById(creatorId);
-    } catch (err) {
-        return next(new HttpError('Creating Order failed', 500))
-    }
-    if (!user) {
-        return next(new HttpError('Could not find user for provided Id', 404))
-    }
+    // let user;
+    // try {
+    //     user = await UserModel.findById(creatorId);
+    // } catch (err) {
+    //     return next(new HttpError('Creating Order failed', 500))
+    // }
+    // if (!user) {
+    //     return next(new HttpError('Could not find user for provided Id', 404))
+    // }
 
     //if user exist then we store or create that new document with our new order and second we can we can add the orderId to the corresponding user
     try {
-        const sess = await mongoose.startSession()
-        sess.startTransaction()
-        await createdOrders.save({ session: sess })
-        user.orders.push(createdOrders)
-        await user.save({ session: sess })
-        await sess.commitTransaction() //if all above tasks completed then session comes to end and if error in any one then catch error
+        // const sess = await mongoose.startSession()
+        // sess.startTransaction()
+        // await createdOrders.save({ session: sess })
+        // user.orders.push(createdOrders)
+        // await user.save({ session: sess })
+        await createdOrders.save()
+        // await sess.commitTransaction() //if all above tasks completed then session comes to end and if error in any one then catch error
     } catch (err) {
         return next(new HttpError("Could not Create order", 500));
     }
@@ -675,7 +748,7 @@ const updateReturnOrdersById = async (req, res, next) => {
 
 //TO UPDATE FOR PATCH MEANS UPDATE WHICH IS SEND
 const updateOrdersById = async (req, res, next) => {
-    const { ridersIdForPickup, ridersIdForDelivery, ridersIdForReturn, status, ridersId, RiderAssignedDate, RiderDeliveredDate, accountsStatus } = req.body;
+    const {cancelReasons, ridersIdForPickup, ridersIdForDelivery, ridersIdForReturn, status, ridersId, RiderAssignedDate, RiderDeliveredDate, accountsStatus } = req.body;
     const orderId = req.params.pid;
     let order;
     try {
@@ -684,6 +757,7 @@ const updateOrdersById = async (req, res, next) => {
             return next(new HttpError("Order not found", 404));
         }
 
+        if(cancelReasons) order.cancelReasons = cancelReasons;
         if (ridersIdForPickup) order.ridersIdForPickup = ridersIdForPickup;
         if (ridersIdForDelivery) order.ridersIdForDelivery = ridersIdForDelivery;
         if (ridersIdForReturn) order.ridersIdForReturn = ridersIdForReturn;
@@ -733,7 +807,8 @@ const deleteOrdersById = async (req, res, next) => {
     const orderId = req.params.pid;
     let order;
     try {
-        order = await OrdersModel.findById(orderId).populate('creator')
+        // order = await OrdersModel.findById(orderId).populate('creator')
+        order = await OrdersModel.findById(orderId)
         //using populate method hence we now want to delete the id also from the user. this means we need access to overwrite or change an existing information in this document 
         //populate allow us to refer to a document stored in another collection and to work with data in that existing document of that other collection to do so we need a relation b/w these documents which is existing in model schemas using ref 
     } catch (err) {
@@ -745,18 +820,55 @@ const deleteOrdersById = async (req, res, next) => {
     }
 
     try {
-        const sess = await mongoose.startSession()
-        sess.startTransaction()
-        await order.deleteOne({ session: sess })
-        order.creator.orders.pull(order)  //hence we had populated creator data in order, so we can access creator user data and and can manipulate it
-        await order.creator.save({ session: sess })
-        await sess.commitTransaction()
+        // const sess = await mongoose.startSession()
+        // sess.startTransaction()
+        // await order.deleteOne({ session: sess })
+        await order.deleteOne()
+        // order.creator.orders.pull(order)  //hence we had populated creator data in order, so we can access creator user data and and can manipulate it
+        // await order.creator.save({ session: sess })
+        // await sess.commitTransaction()
     } catch (err) {
         return next(new HttpError('Could not delete', 500))
     }
     return res.status(200).json({ message: "Order deleted successfully" })
 }
 
+
+const deleteUserOrdersById = async (req, res, next) => {
+    const orderId = req.params.pid;
+    let order;
+    try {
+        // order = await OrdersModel.findById(orderId).populate('creator')
+        order = await OrdersModel.findById(orderId)
+        //using populate method hence we now want to delete the id also from the user. this means we need access to overwrite or change an existing information in this document 
+        //populate allow us to refer to a document stored in another collection and to work with data in that existing document of that other collection to do so we need a relation b/w these documents which is existing in model schemas using ref 
+    } catch (err) {
+        return next(new HttpError('place not found', 404))
+    }
+
+    if (!order) {
+        return next(new HttpError('Could not found order for this id', 404))
+    }
+
+    if (order.status !== "order - placed") {
+        return next(new HttpError('could not delete', 404))
+    }
+
+    try {
+        // const sess = await mongoose.startSession()
+        // sess.startTransaction()
+        // await order.deleteOne({ session: sess })
+        await order.deleteOne()
+        // order.creator.orders.pull(order)  //hence we had populated creator data in order, so we can access creator user data and and can manipulate it
+        // await order.creator.save({ session: sess })
+        // await sess.commitTransaction()
+    } catch (err) {
+        return next(new HttpError('Could not delete', 500))
+    }
+    return res.status(200).json({ message: "Order deleted successfully" })
+}
+
+exports.deleteUserOrdersById = deleteUserOrdersById;
 exports.deleteOrdersById = deleteOrdersById;
 exports.updateOrdersById = updateOrdersById;
 exports.createOrders = createOrders;
@@ -789,7 +901,9 @@ exports.getOrdersForReturnByRiderId = getOrdersForReturnByRiderId;
 exports.authenticateAdminAndRiderToken = authenticateAdminAndRiderToken;
 exports.authenticateApprovedUserToken = authenticateApprovedUserToken;
 exports.authenticateAdminAndRiderAndApprovedandVendorToken = authenticateAdminAndRiderAndApprovedandVendorToken;
+exports.authenticateVendorAndApprovedUserToken = authenticateVendorAndApprovedUserToken;
 
+exports.authenticateThirdPartyToken = authenticateThirdPartyToken;
 //Use simple .find() with .select()
 //✅ Use .limit() for pagination
 //✅ Use .sort() for ordering

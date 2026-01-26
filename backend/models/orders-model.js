@@ -18,7 +18,7 @@ const ordersSchema = new mongoose.Schema({
     DeliveryAddress: { type: String, required: true },
     PickupAddress: { type: String, required: true },
     status: { type: String, required: true },
-    Items: { type: Number, required: true },
+    Dimensions: { type: String, required: true },
     creatorName: { type: String, required: true },
     ridersId: { type: String, required: false },
 
@@ -30,7 +30,7 @@ const ordersSchema = new mongoose.Schema({
     returnAttempt: { type: String, required: false },
 
     accountsStatus: { type: String, required: false },
-
+    
     cancelReasons: { type: String, required: false },
     creator: { type: mongoose.Types.ObjectId, required: true, ref: 'UserModel' }, // ref: 'UserModel'
 })

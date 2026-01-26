@@ -38,6 +38,7 @@ export default function Login() {
         if (data?.message === "approved") {
             navigate('/order-form')
             setOpenMenuLogin(false);
+            localStorage.setItem("name", data?.name);
         }
         if (data?.message === "rider") {
             navigate('/rider')
@@ -46,6 +47,7 @@ export default function Login() {
         if (data?.message === "vendor") {
             navigate('/vendor-page')
             setOpenMenuLogin(false);
+            localStorage.setItem("name", data?.name);
         }
         setFormData({
             email: "",
